@@ -1,0 +1,77 @@
+/*
+  Arts World – Global Styles
+  ---------------------------------------------------------------
+  This file assumes Tailwind CSS 4 is already installed & wired up
+  in your project (i.e. your main CSS entry already has
+  `@import "tailwindcss";` at the top, per your existing setup).
+
+  We only ADD the custom theme tokens here via the CSS-first
+  `@theme` API introduced in Tailwind CSS 4. Do NOT duplicate the
+  `@import "tailwindcss";` line if it already exists elsewhere —
+  merge this block into your existing global stylesheet instead.
+*/
+
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #5b0e2d;
+  --color-primary-light: #7a1940;
+  --color-primary-dark: #400a20;
+
+  --color-secondary: #d4af37;
+  --color-secondary-light: #e6c866;
+  --color-secondary-dark: #b8932a;
+
+  --color-background: #fff8f0;
+  --color-text: #2f1b14;
+
+  --font-heading: "Playfair Display", ui-serif, Georgia, serif;
+  --font-body: "Poppins", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    font-family: var(--font-body);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
+  }
+
+  /* Consistent, branded keyboard-focus indicator across every interactive
+     element — clearer than relying on inconsistent default browser rings,
+     and only shows for keyboard navigation (not mouse clicks). */
+  :focus-visible {
+    outline: 2px solid var(--color-secondary);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+@layer utilities {
+  .container-app {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-y {
+    @apply py-12 md:py-16;
+  }
+
+  .text-gradient-gold {
+    background: linear-gradient(90deg, var(--color-secondary), var(--color-secondary-dark));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}

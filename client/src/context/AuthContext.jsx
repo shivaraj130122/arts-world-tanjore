@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
 import { AuthContext } from "./auth-context";
+import {
+  loginUser,
+  registerUser,
+  logoutUser,
+} from "../services/authService";
 
 const STORAGE_KEY = "aw_user";
 
@@ -15,20 +20,64 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (user) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(user)
+      );
     } else {
       localStorage.removeItem(STORAGE_KEY);
     }
   }, [user]);
 
-  const login = (userData) => setUser(userData);
+  const login = async (credentials) => {
+    const data = await loginUser(credentials);
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("aw_token");
+    if (!data?.success || !data?.user) {
+      throw new Error(
+        data?.message || "Login failed"
+      );
+    }
+
+    setUser(data.user);
+
+    return data;
   };
 
-  const value = { user, isAuthenticated: Boolean(user), login, logout };
+  const register = async (payload) => {
+    const data = await registerUser(payload);
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    if (!data?.success || !data?.user) {
+      throw new Error(
+        data?.message || "Registration failed"
+      );
+    }
+
+    // Store the JWT returned by registration.
+    if (data.token) {
+      localStorage.setItem("aw_token", data.token);
+    }
+
+    setUser(data.user);
+
+    return data;
+  };
+
+  const logout = () => {
+    logoutUser();
+    setUser(null);
+  };
+
+  const value = {
+    user,
+    isAuthenticated: Boolean(user),
+    login,
+    register,
+    logout,
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };

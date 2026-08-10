@@ -11,19 +11,14 @@ const handleResponse = async (response) => {
   return data;
 };
 
-export const getProducts = async () => {
-  const response = await fetch(`${API_BASE_URL}/products`);
+export const getCategories = async () => {
+  const response = await fetch(`${API_BASE_URL}/categories`);
   return handleResponse(response);
 };
 
-export const getProductById = async (id) => {
-  const response = await fetch(`${API_BASE_URL}/products/${id}`);
-  return handleResponse(response);
-};
-
-export const getProductsByCategory = async (category) => {
+export const getCategoryBySlug = async (slug) => {
   const response = await fetch(
-    `${API_BASE_URL}/products?category=${encodeURIComponent(category)}`
+    `${API_BASE_URL}/categories/${encodeURIComponent(slug)}`
   );
 
   return handleResponse(response);

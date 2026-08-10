@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { FiChevronRight } from "react-icons/fi";
+
 import Container from "../components/ui/Container";
 import Button from "../components/ui/Button";
 import ProductGallery from "../components/product/ProductGallery";
@@ -9,64 +10,143 @@ import ProductInfo from "../components/product/ProductInfo";
 import ProductActions from "../components/product/ProductActions";
 import ProductInformation from "../components/product/ProductInformation";
 import RelatedProducts from "../components/product/RelatedProducts";
-import { products } from "../constants/products";
+
+import { getProductById } from "../services/productService";
 import { useCart } from "../hooks/useCart";
 import { useWishlist } from "../hooks/useWishlist";
 
-// Looks up the product straight from the existing local product data — no
-// backend call exists yet, so this is the same data source Shop.jsx and the
-// Home sections already use.
-const findProductById = (id) => products.find((p) => p._id === id);
+const ProductNotFound = () => {
+  return (
+    <Container className="section-y">
+      <div className="mx-auto max-w-xl text-center">
+        <div className="font-heading text-6xl font-bold text-primary/20">
+          404
+        </div>
 
-const ProductNotFound = () => (
-  <Container className="section-y flex min-h-[60vh] flex-col items-center justify-center text-center">
-    <p className="font-heading text-6xl font-bold text-secondary">404</p>
-    <h1 className="mt-3 font-heading text-2xl font-bold text-primary">
-      Artwork Not Found
-    </h1>
-    <p className="mt-2 max-w-md text-sm text-text/60">
-      Sorry, we couldn&apos;t find the artwork you&apos;re looking for.
-    </p>
-    <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-      <Link to="/shop">
-        <Button size="lg">Back to Shop</Button>
-      </Link>
-      <Link to="/shop">
-        <Button size="lg" variant="outline">
-          Explore Our Collection
-        </Button>
-      </Link>
-    </div>
-  </Container>
-);
+        <h1 className="mt-4 font-heading text-3xl font-semibold text-primary">
+          Artwork Not Found
+        </h1>
+
+        <p className="mt-3 text-sm leading-6 text-text/60">
+          Sorry, we couldn&apos;t find the artwork you&apos;re looking for.
+        </p>
+
+        <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <Link to="/shop">
+            <Button>Back to Shop</Button>
+          </Link>
+
+          <Link to="/collections">
+            <Button variant="secondary">
+              Explore Our Collection
+            </Button>
+          </Link>
+        </div>
+      </div>
+    </Container>
+  );
+};
+
+const ProductLoading = () => {
+  return (
+    <Container className="section-y">
+      <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-14">
+        <div className="aspect-square animate-pulse rounded-2xl bg-primary/5" />
+
+        <div className="space-y-5">
+          <div className="h-5 w-32 animate-pulse rounded bg-primary/5" />
+
+          <div className="h-10 w-3/4 animate-pulse rounded bg-primary/5" />
+
+          <div className="h-24 w-full animate-pulse rounded bg-primary/5" />
+
+          <div className="h-12 w-40 animate-pulse rounded bg-primary/5" />
+        </div>
+      </div>
+    </Container>
+  );
+};
 
 const ProductDetails = () => {
   const { id } = useParams();
-  const product = useMemo(() => findProductById(id), [id]);
 
-  if (!product) {
+  const [product, setProduct] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadProduct = async () => {
+      try {
+        setIsLoading(true);
+        setError("");
+
+        const data = await getProductById(id);
+
+        if (isMounted) {
+          setProduct(data.product || null);
+        }
+      } catch (requestError) {
+        console.error("Failed to load product:", requestError);
+
+        if (isMounted) {
+          setProduct(null);
+          setError(
+            requestError.message || "Unable to load this artwork."
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    if (id) {
+      loadProduct();
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  if (isLoading) {
+    return <ProductLoading />;
+  }
+
+  if (!product || error) {
     return <ProductNotFound />;
   }
 
-  // Keying by product._id forces a full remount when navigating between
-  // products (React Router reuses the same component instance for
-  // param-only changes on the same route otherwise), so quantity and
-  // lightboxIndex correctly reset instead of carrying over from the
-  // previous product.
-  return <ProductDetailsContent key={product._id} product={product} />;
+  return (
+    <ProductDetailsContent
+      key={product._id}
+      product={product}
+    />
+  );
 };
 
 const ProductDetailsContent = ({ product }) => {
   const navigate = useNavigate();
+
   const { addToCart } = useCart();
+
   const { toggleWishlist, isWishlisted } = useWishlist();
 
-  // Gallery falls back to the single `image` field when `images` is empty,
-  // and to an empty array (handled gracefully by ProductGallery) if neither
-  // exists — no fake image files are ever invented.
   const galleryImages = useMemo(() => {
-    if (Array.isArray(product.images) && product.images.length > 0) return product.images;
-    if (product.image) return [product.image];
+    if (
+      Array.isArray(product.images) &&
+      product.images.length > 0
+    ) {
+      return product.images;
+    }
+
+    if (product.image) {
+      return [product.image];
+    }
+
     return [];
   }, [product]);
 
@@ -82,49 +162,69 @@ const ProductDetailsContent = ({ product }) => {
     navigate("/cart");
   };
 
+  const categorySlug = product.category
+    ? product.category
+        .toLowerCase()
+        .replace(/\s+&\s+/g, "-")
+        .replace(/\s+/g, "-")
+    : null;
+
   return (
     <div>
-      <Container className="pt-6">
+      {/* Breadcrumb */}
+      <Container>
         <nav
           aria-label="Breadcrumb"
-          className="flex flex-wrap items-center gap-1.5 text-xs text-text/50"
+          className="flex items-center gap-2 py-5 text-sm text-text/60"
         >
-          <Link to="/" className="transition hover:text-primary">
+          <Link
+            to="/"
+            className="transition hover:text-primary"
+          >
             Home
           </Link>
-          <FiChevronRight size={12} />
-          <Link to="/shop" className="transition hover:text-primary">
+
+          <FiChevronRight size={14} />
+
+          <Link
+            to="/shop"
+            className="transition hover:text-primary"
+          >
             Shop
           </Link>
-          {product.category && (
+
+          {categorySlug && (
             <>
-              <FiChevronRight size={12} />
+              <FiChevronRight size={14} />
+
               <Link
-                to={`/shop?category=${product.category
-                  .toLowerCase()
-                  .replace(/\s+&\s+/g, "-")
-                  .replace(/\s+/g, "-")}`}
+                to={`/shop?category=${categorySlug}`}
                 className="transition hover:text-primary"
               >
                 {product.category}
               </Link>
             </>
           )}
-          <FiChevronRight size={12} />
-          <span className="max-w-[160px] truncate text-primary sm:max-w-xs">
+
+          <FiChevronRight size={14} />
+
+          <span className="max-w-[220px] truncate text-text/40">
             {product.name}
           </span>
         </nav>
       </Container>
 
+      {/* Main Product */}
       <Container className="section-y">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-14">
+          {/* Gallery */}
           <ProductGallery
             images={galleryImages}
             name={product.name}
             onOpenLightbox={setLightboxIndex}
           />
 
+          {/* Product Details */}
           <div>
             <ProductInfo product={product} />
 
@@ -136,7 +236,9 @@ const ProductDetailsContent = ({ product }) => {
                 onAddToCart={handleAddToCart}
                 onBuyNow={handleBuyNow}
                 isWishlisted={isWishlisted(product._id)}
-                onToggleWishlist={() => toggleWishlist(product)}
+                onToggleWishlist={() =>
+                  toggleWishlist(product)
+                }
               />
             </div>
 
@@ -149,11 +251,14 @@ const ProductDetailsContent = ({ product }) => {
           </div>
         </div>
 
+        {/* Product Information */}
         <ProductInformation product={product} />
       </Container>
 
+      {/* Related Products */}
       <RelatedProducts currentProduct={product} />
 
+      {/* Image Lightbox */}
       <ProductImageLightbox
         images={galleryImages}
         activeIndex={lightboxIndex}

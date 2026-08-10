@@ -42,17 +42,29 @@ const ProductNotFound = () => (
 
 const ProductDetails = () => {
   const { id } = useParams();
+  const product = useMemo(() => findProductById(id), [id]);
+
+  if (!product) {
+    return <ProductNotFound />;
+  }
+
+  // Keying by product._id forces a full remount when navigating between
+  // products (React Router reuses the same component instance for
+  // param-only changes on the same route otherwise), so quantity and
+  // lightboxIndex correctly reset instead of carrying over from the
+  // previous product.
+  return <ProductDetailsContent key={product._id} product={product} />;
+};
+
+const ProductDetailsContent = ({ product }) => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
-
-  const product = useMemo(() => findProductById(id), [id]);
 
   // Gallery falls back to the single `image` field when `images` is empty,
   // and to an empty array (handled gracefully by ProductGallery) if neither
   // exists — no fake image files are ever invented.
   const galleryImages = useMemo(() => {
-    if (!product) return [];
     if (Array.isArray(product.images) && product.images.length > 0) return product.images;
     if (product.image) return [product.image];
     return [];
@@ -60,10 +72,6 @@ const ProductDetails = () => {
 
   const [quantity, setQuantity] = useState(1);
   const [lightboxIndex, setLightboxIndex] = useState(null);
-
-  if (!product) {
-    return <ProductNotFound />;
-  }
 
   const handleAddToCart = () => {
     addToCart(product, quantity);

@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+
 import Container from "../components/ui/Container";
-import ShopHeader from "../components/shop/ShopHeader";
 import ShopToolbar from "../components/shop/ShopToolbar";
 import ShopFilters from "../components/shop/ShopFilters";
 import MobileFilterDrawer from "../components/shop/MobileFilterDrawer";
@@ -9,9 +9,11 @@ import ProductGrid from "../components/shop/ProductGrid";
 import Pagination from "../components/shop/Pagination";
 import EmptyProducts from "../components/shop/EmptyProducts";
 import ProductQuickView from "../components/shop/ProductQuickView";
+
 import { products } from "../constants/products";
 import { categories } from "../constants/categories";
 import { useDebounce } from "../hooks/useDebounce";
+
 import {
   getFilteredAndSortedProducts,
   paginate,
@@ -25,19 +27,16 @@ const DEFAULT_FILTERS = {
   sort: "featured",
 };
 
-// Shop.jsx stays a thin coordinator: it owns state (search/filters/page/view),
-// delegates rendering to components/shop/*, and delegates filtering/sorting
-// math to utils/productFilters.js.
 const Shop = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [searchInput, setSearchInput] = useState(searchParams.get("search") || "");
-  const debouncedSearch = useDebounce(searchInput, 350);
+  const [searchInput, setSearchInput] = useState(
+    searchParams.get("search") || ""
+  );
 
-  const [filters, setFilters] = useState({
-    ...DEFAULT_FILTERS,
-    category: searchParams.get("category") || "all",
-    sort: searchParams.get("sort") || "featured",
+  const [localFilters, setLocalFilters] = useState({
+    priceRange: "all",
+    availability: "all",
   });
 
   const [page, setPage] = useState(1);
@@ -45,83 +44,163 @@ const Shop = () => {
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
 
-  // Keep the URL in sync with the state that's worth sharing/bookmarking.
-  // setSearchParams has a stable identity from React Router, so including it
-  // in the dependency array is safe and needs no lint suppression.
-  useEffect(() => {
-    const params = {};
-    if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
-    if (filters.category !== "all") params.category = filters.category;
-    if (filters.sort !== "featured") params.sort = filters.sort;
-    setSearchParams(params, { replace: true });
-  }, [debouncedSearch, filters.category, filters.sort, setSearchParams]);
+  const debouncedSearch = useDebounce(searchInput, 350);
 
-  // The reverse direction: if the URL changes from outside this component
-  // (e.g. the Navbar's search box navigating to /shop?search=... while Shop
-  // is already mounted, so no remount happens), pick up the new values.
-  // This uses React's documented "adjust state during render" pattern
-  // (comparing against a tracked previous value) rather than a useEffect,
-  // since setState calls inside an effect body cause cascading renders.
-  const [syncedParamsKey, setSyncedParamsKey] = useState(searchParams.toString());
-  const currentParamsKey = searchParams.toString();
-  if (currentParamsKey !== syncedParamsKey) {
-    setSyncedParamsKey(currentParamsKey);
-    setSearchInput(searchParams.get("search") || "");
-    setFilters((prev) => ({
-      ...prev,
-      category: searchParams.get("category") || "all",
-      sort: searchParams.get("sort") || "featured",
-    }));
-  }
+  /*
+   * Category and sort come directly from the URL.
+   *
+   * This makes Footer, Collections, browser navigation and direct URLs
+   * all work from the same source of truth.
+   */
+  const category =
+    searchParams.get("category") || "all";
 
-  // Any change to search/filters resets pagination back to page 1 — done
-  // directly in the handlers below rather than a reactive effect, since
-  // calling setState synchronously inside an effect causes cascading renders.
+  const sort =
+    searchParams.get("sort") || "featured";
+
+  const filters = useMemo(
+    () => ({
+      ...DEFAULT_FILTERS,
+      category,
+      sort,
+      priceRange: localFilters.priceRange,
+      availability: localFilters.availability,
+    }),
+    [
+      category,
+      sort,
+      localFilters.priceRange,
+      localFilters.availability,
+    ]
+  );
 
   const activeFilters = useMemo(
-    () => ({ ...filters, search: debouncedSearch }),
+    () => ({
+      ...filters,
+      search: debouncedSearch,
+    }),
     [filters, debouncedSearch]
   );
 
   const visibleProducts = useMemo(
-    () => getFilteredAndSortedProducts(products, activeFilters),
+    () =>
+      getFilteredAndSortedProducts(
+        products,
+        activeFilters
+      ),
     [activeFilters]
   );
 
-  const totalPages = getTotalPages(visibleProducts.length);
-  const pageProducts = paginate(visibleProducts, page);
+  const totalPages = getTotalPages(
+    visibleProducts.length
+  );
+
+  const pageProducts = paginate(
+    visibleProducts,
+    page
+  );
 
   const activeCategoryLabel =
-    filters.category !== "all"
-      ? categories.find((c) => c.slug === filters.category)?.title
+    category !== "all"
+      ? categories.find(
+          (item) => item.slug === category
+        )?.title
       : null;
 
+  /*
+   * Search
+   */
   const handleSearchChange = (value) => {
     setSearchInput(value);
     setPage(1);
   };
 
+  /*
+   * Filters
+   */
   const handleFilterChange = (patch) => {
-    setFilters((prev) => ({ ...prev, ...patch }));
     setPage(1);
+
+    /*
+     * Category → URL
+     */
+    if (patch.category !== undefined) {
+      const params = new URLSearchParams(searchParams);
+
+      if (patch.category === "all") {
+        params.delete("category");
+      } else {
+        params.set("category", patch.category);
+      }
+
+      setSearchParams(params, {
+        replace: true,
+      });
+    }
+
+    /*
+     * Sort → URL
+     */
+    if (patch.sort !== undefined) {
+      const params = new URLSearchParams(searchParams);
+
+      if (patch.sort === "featured") {
+        params.delete("sort");
+      } else {
+        params.set("sort", patch.sort);
+      }
+
+      setSearchParams(params, {
+        replace: true,
+      });
+    }
+
+    /*
+     * Price and availability stay local.
+     */
+    if (
+      patch.priceRange !== undefined ||
+      patch.availability !== undefined
+    ) {
+      setLocalFilters((prev) => ({
+        ...prev,
+        ...patch,
+      }));
+    }
   };
 
+  /*
+   * Clear all filters
+   */
   const handleClearAll = () => {
     setSearchInput("");
-    setFilters(DEFAULT_FILTERS);
+
+    setLocalFilters({
+      priceRange: "all",
+      availability: "all",
+    });
+
     setPage(1);
+
+    const params = new URLSearchParams();
+
+    setSearchParams(params, {
+      replace: true,
+    });
   };
 
   return (
     <div>
-      <ShopHeader activeCategoryLabel={activeCategoryLabel} />
-
       <Container className="section-y">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
-          {/* Desktop sidebar */}
+          {/* Desktop Filters */}
           <aside className="hidden lg:col-span-1 lg:block">
             <div className="sticky top-24">
-              <ShopFilters filters={filters} onChange={handleFilterChange} onClear={handleClearAll} />
+              <ShopFilters
+                filters={filters}
+                onChange={handleFilterChange}
+                onClear={handleClearAll}
+              />
             </div>
           </aside>
 
@@ -130,15 +209,34 @@ const Shop = () => {
             <ShopToolbar
               searchInput={searchInput}
               onSearchChange={handleSearchChange}
-              sort={filters.sort}
-              onSortChange={(sort) => handleFilterChange({ sort })}
+              sort={sort}
+              onSortChange={(nextSort) =>
+                handleFilterChange({
+                  sort: nextSort,
+                })
+              }
               view={view}
               onViewChange={setView}
               shownCount={pageProducts.length}
               totalCount={visibleProducts.length}
-              onOpenMobileFilters={() => setIsMobileFiltersOpen(true)}
+              onOpenMobileFilters={() =>
+                setIsMobileFiltersOpen(true)
+              }
             />
 
+            {/* Active Category */}
+            {activeCategoryLabel && (
+              <div className="mt-4">
+                <p className="text-sm text-text/60">
+                  Showing products from{" "}
+                  <span className="font-semibold text-primary">
+                    {activeCategoryLabel}
+                  </span>
+                </p>
+              </div>
+            )}
+
+            {/* Product Grid */}
             <div className="mt-6">
               {pageProducts.length > 0 ? (
                 <>
@@ -147,26 +245,44 @@ const Shop = () => {
                     view={view}
                     onQuickView={setQuickViewProduct}
                   />
-                  <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+
+                  <Pagination
+                    page={page}
+                    totalPages={totalPages}
+                    onPageChange={setPage}
+                  />
                 </>
               ) : (
-                <EmptyProducts onClearFilters={handleClearAll} />
+                <EmptyProducts
+                  onClearFilters={handleClearAll}
+                />
               )}
             </div>
           </div>
         </div>
       </Container>
 
+      {/* Mobile Filters */}
       <MobileFilterDrawer
         isOpen={isMobileFiltersOpen}
-        onClose={() => setIsMobileFiltersOpen(false)}
+        onClose={() =>
+          setIsMobileFiltersOpen(false)
+        }
         filters={filters}
         onChange={handleFilterChange}
         onClear={handleClearAll}
-        onApply={() => setIsMobileFiltersOpen(false)}
+        onApply={() =>
+          setIsMobileFiltersOpen(false)
+        }
       />
 
-      <ProductQuickView product={quickViewProduct} onClose={() => setQuickViewProduct(null)} />
+      {/* Quick View */}
+      <ProductQuickView
+        product={quickViewProduct}
+        onClose={() =>
+          setQuickViewProduct(null)
+        }
+      />
     </div>
   );
 };

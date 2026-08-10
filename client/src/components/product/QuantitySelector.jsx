@@ -1,16 +1,24 @@
 import { FiMinus, FiPlus } from "react-icons/fi";
 
-// Clamped between 1 and maxQuantity (if provided). Ignores direct typed
-// input beyond safe integer parsing so it can never land on 0, negative,
-// or a non-numeric value.
 const QuantitySelector = ({ quantity, onChange, maxQuantity }) => {
-  const canIncrease = typeof maxQuantity !== "number" || quantity < maxQuantity;
-  const canDecrease = quantity > 1;
+  const canIncrease =
+    typeof maxQuantity !== "number" || quantity < maxQuantity;
+
+  // Product-page quantity is allowed to start at 0.
+  const canDecrease = quantity > 0;
 
   const handleInputChange = (e) => {
     const parsed = parseInt(e.target.value, 10);
+
     if (Number.isNaN(parsed)) return;
-    const clamped = Math.max(1, typeof maxQuantity === "number" ? Math.min(parsed, maxQuantity) : parsed);
+
+    const clamped = Math.max(
+      0,
+      typeof maxQuantity === "number"
+        ? Math.min(parsed, maxQuantity)
+        : parsed
+    );
+
     onChange(clamped);
   };
 
@@ -25,6 +33,7 @@ const QuantitySelector = ({ quantity, onChange, maxQuantity }) => {
       >
         <FiMinus size={14} />
       </button>
+
       <input
         type="text"
         inputMode="numeric"
@@ -33,6 +42,7 @@ const QuantitySelector = ({ quantity, onChange, maxQuantity }) => {
         aria-label="Quantity"
         className="w-10 border-none bg-transparent text-center text-sm font-medium text-text outline-none"
       />
+
       <button
         type="button"
         onClick={() => canIncrease && onChange(quantity + 1)}

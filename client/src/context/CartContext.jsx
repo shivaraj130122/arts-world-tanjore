@@ -7,7 +7,19 @@ const STORAGE_KEY = "aw_cart";
 const readInitialCart = () => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+
+    if (!raw) return [];
+
+    const parsed = JSON.parse(raw);
+
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .filter((item) => item && item._id)
+      .map((item) => ({
+        ...item,
+        quantity: Math.max(1, Number(item.quantity) || 1),
+      }));
   } catch {
     return [];
   }
@@ -21,34 +33,60 @@ export const CartProvider = ({ children }) => {
   }, [items]);
 
   const addToCart = (product, quantity = 1) => {
+    const safeQuantity = Math.max(1, Number(quantity) || 1);
+
     setItems((prev) => {
       const existing = prev.find((item) => item._id === product._id);
+
       if (existing) {
         return prev.map((item) =>
           item._id === product._id
-            ? { ...item, quantity: item.quantity + quantity }
+            ? {
+                ...item,
+                quantity: item.quantity + safeQuantity,
+              }
             : item
         );
       }
-      return [...prev, { ...product, quantity }];
+
+      return [
+        ...prev,
+        {
+          ...product,
+          quantity: safeQuantity,
+        },
+      ];
     });
-    toast.success(`${product.name || "Item"} added to cart`);
+
+    toast.success(
+      `${product.name || "Item"} × ${safeQuantity} added to cart`
+    );
   };
 
   const removeFromCart = (id) => {
     setItems((prev) => prev.filter((item) => item._id !== id));
-    toast.success("Removed from cart");
+    toast.success("Item removed from cart");
   };
 
   const updateQuantity = (id, quantity) => {
+    const safeQuantity = Math.max(1, Number(quantity) || 1);
+
     setItems((prev) =>
       prev.map((item) =>
-        item._id === id ? { ...item, quantity: Math.max(1, quantity) } : item
+        item._id === id
+          ? {
+              ...item,
+              quantity: safeQuantity,
+            }
+          : item
       )
     );
   };
 
-  const clearCart = () => setItems([]);
+  const clearCart = () => {
+    setItems([]);
+    toast.success("Cart cleared");
+  };
 
   const cartCount = useMemo(
     () => items.reduce((sum, item) => sum + item.quantity, 0),
@@ -56,7 +94,11 @@ export const CartProvider = ({ children }) => {
   );
 
   const cartTotal = useMemo(
-    () => items.reduce((sum, item) => sum + item.quantity * (item.price || 0), 0),
+    () =>
+      items.reduce(
+        (sum, item) => sum + item.quantity * (Number(item.price) || 0),
+        0
+      ),
     [items]
   );
 
@@ -70,5 +112,9 @@ export const CartProvider = ({ children }) => {
     cartTotal,
   };
 
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+  return (
+    <CartContext.Provider value={value}>
+      {children}
+    </CartContext.Provider>
+  );
 };

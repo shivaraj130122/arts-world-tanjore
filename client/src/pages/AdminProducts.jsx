@@ -1,0 +1,977 @@
+import { useEffect, useState } from "react";
+import {
+  FiEdit2,
+  FiPlus,
+  FiTrash2,
+  FiX,
+} from "react-icons/fi";
+import toast from "react-hot-toast";
+import Container from "../components/ui/Container";
+import {
+  getProducts,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+} from "../services/productService";
+
+const emptyProduct = {
+  _id: "",
+  name: "",
+  category: "",
+  description: "",
+  price: "",
+  originalPrice: "",
+  discount: 0,
+  rating: 0,
+  reviewCount: 0,
+  stock: "in-stock",
+  badge: "",
+  isFeatured: false,
+  isBestSeller: false,
+  isNew: false,
+  image: "",
+  images: "",
+  sku: "",
+  stockCount: 0,
+  material: "",
+  style: "",
+  dimensions: "",
+  frame: "",
+  handmade: true,
+  customizable: false,
+};
+
+const AdminProducts = () => {
+  const [products, setProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [form, setForm] = useState({
+    ...emptyProduct,
+  });
+
+  const loadProducts = async () => {
+    try {
+      setIsLoading(true);
+
+      const data = await getProducts();
+
+      setProducts(data.products || []);
+    } catch (error) {
+      console.error(
+        "Load products error:",
+        error
+      );
+
+      toast.error(
+        error?.response?.data?.message ||
+          error.message ||
+          "Unable to load products"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadInitialProducts = async () => {
+      try {
+        const data = await getProducts();
+
+        if (!cancelled) {
+          setProducts(data.products || []);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error(
+            "Load products error:",
+            error
+          );
+
+          toast.error(
+            error?.response?.data?.message ||
+              error.message ||
+              "Unable to load products"
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadInitialProducts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleChange = (event) => {
+    const {
+      name,
+      value,
+      type,
+      checked,
+    } = event.target;
+
+    setForm((current) => ({
+      ...current,
+      [name]:
+        type === "checkbox"
+          ? checked
+          : value,
+    }));
+  };
+
+  const openCreateForm = () => {
+    setEditingId(null);
+
+    setForm({
+      ...emptyProduct,
+    });
+
+    setShowForm(true);
+  };
+
+  const openEditForm = (product) => {
+    setEditingId(product._id);
+
+    setForm({
+      _id: String(product._id ?? ""),
+      name: String(product.name ?? ""),
+      category: String(product.category ?? ""),
+      description: String(
+        product.description ?? ""
+      ),
+      price: product.price ?? "",
+      originalPrice:
+        product.originalPrice ?? "",
+      discount: product.discount ?? 0,
+      rating: product.rating ?? 0,
+      reviewCount:
+        product.reviewCount ?? 0,
+      stock:
+        product.stock ?? "in-stock",
+      badge: String(product.badge ?? ""),
+      isFeatured: Boolean(
+        product.isFeatured
+      ),
+      isBestSeller: Boolean(
+        product.isBestSeller
+      ),
+      isNew: Boolean(product.isNew),
+      image: String(product.image ?? ""),
+      images: Array.isArray(product.images)
+        ? product.images
+            .map((item) =>
+              String(item ?? "")
+            )
+            .filter(Boolean)
+            .join("\n")
+        : "",
+      sku: String(product.sku ?? ""),
+      stockCount:
+        product.stockCount ?? 0,
+      material: String(
+        product.material ?? ""
+      ),
+      style: String(
+        product.style ?? ""
+      ),
+      dimensions: String(
+        product.dimensions ?? ""
+      ),
+      frame: String(
+        product.frame ?? ""
+      ),
+      handmade:
+        product.handmade !== false,
+      customizable: Boolean(
+        product.customizable
+      ),
+    });
+
+    setShowForm(true);
+  };
+
+  const closeForm = () => {
+    if (isSaving) return;
+
+    setShowForm(false);
+    setEditingId(null);
+
+    setForm({
+      ...emptyProduct,
+    });
+  };
+
+  const preparePayload = () => {
+    return {
+      _id: String(
+        form._id ?? ""
+      ).trim(),
+
+      name: String(
+        form.name ?? ""
+      ).trim(),
+
+      category: String(
+        form.category ?? ""
+      ).trim(),
+
+      description: String(
+        form.description ?? ""
+      ).trim(),
+
+      price: Number(form.price),
+
+      originalPrice:
+        form.originalPrice === "" ||
+        form.originalPrice === null ||
+        form.originalPrice === undefined
+          ? null
+          : Number(form.originalPrice),
+
+      discount: Number(
+        form.discount ?? 0
+      ),
+
+      rating: Number(
+        form.rating ?? 0
+      ),
+
+      reviewCount: Number(
+        form.reviewCount ?? 0
+      ),
+
+      stock:
+        form.stock || "in-stock",
+
+      badge: String(
+        form.badge ?? ""
+      ).trim(),
+
+      isFeatured: Boolean(
+        form.isFeatured
+      ),
+
+      isBestSeller: Boolean(
+        form.isBestSeller
+      ),
+
+      isNew: Boolean(form.isNew),
+
+      image: String(
+        form.image ?? ""
+      ).trim(),
+
+      images: String(
+        form.images ?? ""
+      )
+        .split("\n")
+        .map((item) =>
+          item.trim()
+        )
+        .filter(Boolean),
+
+      sku: String(
+        form.sku ?? ""
+      ).trim(),
+
+      stockCount: Number(
+        form.stockCount ?? 0
+      ),
+
+      material: String(
+        form.material ?? ""
+      ).trim(),
+
+      style: String(
+        form.style ?? ""
+      ).trim(),
+
+      dimensions: String(
+        form.dimensions ?? ""
+      ).trim(),
+
+      frame:
+        String(
+          form.frame ?? ""
+        ).trim() || null,
+
+      handmade: Boolean(
+        form.handmade
+      ),
+
+      customizable: Boolean(
+        form.customizable
+      ),
+    };
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (
+      !String(form._id ?? "").trim() ||
+      !String(form.name ?? "").trim() ||
+      !String(form.category ?? "").trim() ||
+      !String(
+        form.description ?? ""
+      ).trim() ||
+      !String(form.sku ?? "").trim()
+    ) {
+      toast.error(
+        "Please fill all required fields."
+      );
+
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+
+      const payload =
+        preparePayload();
+
+      if (editingId) {
+        await updateProduct(
+          editingId,
+          payload
+        );
+
+        toast.success(
+          "Product updated successfully!"
+        );
+      } else {
+        await createProduct(
+          payload
+        );
+
+        toast.success(
+          "Product created successfully!"
+        );
+      }
+
+      setShowForm(false);
+      setEditingId(null);
+
+      setForm({
+        ...emptyProduct,
+      });
+
+      await loadProducts();
+    } catch (error) {
+      console.error(
+        "Save product error:",
+        error
+      );
+
+      toast.error(
+        error?.response?.data?.message ||
+          error.message ||
+          "Unable to save product"
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    const confirmed =
+      window.confirm(
+        "Are you sure you want to delete this product?"
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteProduct(id);
+
+      toast.success(
+        "Product deleted successfully!"
+      );
+
+      await loadProducts();
+    } catch (error) {
+      console.error(
+        "Delete product error:",
+        error
+      );
+
+      toast.error(
+        error?.response?.data?.message ||
+          error.message ||
+          "Unable to delete product"
+      );
+    }
+  };
+
+  return (
+    <div className="py-10 sm:py-14">
+      <Container>
+        {/* Header */}
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-secondary-dark">
+              Administration
+            </p>
+
+            <h1 className="mt-2 font-heading text-3xl font-bold text-primary">
+              Products
+            </h1>
+
+            <p className="mt-2 text-sm text-text/60">
+              Manage your artwork catalog.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={openCreateForm}
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-background transition hover:bg-primary-light"
+          >
+            <FiPlus size={17} />
+            Add Product
+          </button>
+        </div>
+
+        {/* Product Form */}
+        {showForm && (
+          <section className="mb-8 rounded-3xl border border-primary/10 bg-white p-6 shadow-sm sm:p-8">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="font-heading text-xl font-semibold text-primary">
+                  {editingId
+                    ? "Edit Product"
+                    : "Add Product"}
+                </h2>
+
+                <p className="mt-1 text-sm text-text/55">
+                  Fields marked with * are required.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeForm}
+                disabled={isSaving}
+                className="grid h-10 w-10 place-items-center rounded-full text-text/60 transition hover:bg-primary/10 hover:text-primary"
+                aria-label="Close form"
+              >
+                <FiX size={20} />
+              </button>
+            </div>
+
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-6"
+            >
+              {/* Basic Information */}
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-text">
+                    Product ID *
+                  </label>
+
+                  <input
+                    name="_id"
+                    value={form._id}
+                    onChange={handleChange}
+                    disabled={
+                      Boolean(editingId)
+                    }
+                    className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary disabled:bg-gray-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-text">
+                    SKU *
+                  </label>
+
+                  <input
+                    name="sku"
+                    value={form.sku}
+                    onChange={handleChange}
+                    className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-text">
+                    Product Name *
+                  </label>
+
+                  <input
+                    name="name"
+                    value={form.name}
+                    onChange={handleChange}
+                    className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-text">
+                    Category *
+                  </label>
+
+                  <input
+                    name="category"
+                    value={form.category}
+                    onChange={handleChange}
+                    placeholder="tanjore-paintings"
+                    className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-text">
+                  Description *
+                </label>
+
+                <textarea
+                  name="description"
+                  value={form.description}
+                  onChange={handleChange}
+                  rows={4}
+                  className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
+                />
+              </div>
+
+              {/* Pricing */}
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-text">
+                    Price *
+                  </label>
+
+                  <input
+                    type="number"
+                    min="0"
+                    name="price"
+                    value={form.price}
+                    onChange={handleChange}
+                    className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-text">
+                    Original Price
+                  </label>
+
+                  <input
+                    type="number"
+                    min="0"
+                    name="originalPrice"
+                    value={
+                      form.originalPrice
+                    }
+                    onChange={handleChange}
+                    className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-text">
+                    Discount %
+                  </label>
+
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    name="discount"
+                    value={
+                      form.discount
+                    }
+                    onChange={handleChange}
+                    className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Stock */}
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-text">
+                    Stock Status
+                  </label>
+
+                  <select
+                    name="stock"
+                    value={
+                      form.stock
+                    }
+                    onChange={handleChange}
+                    className="w-full rounded-lg border border-primary/20 bg-white px-4 py-2.5 text-sm outline-none focus:border-primary"
+                  >
+                    <option value="in-stock">
+                      In Stock
+                    </option>
+
+                    <option value="low-stock">
+                      Low Stock
+                    </option>
+
+                    <option value="out-of-stock">
+                      Out of Stock
+                    </option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-text">
+                    Stock Count
+                  </label>
+
+                  <input
+                    type="number"
+                    min="0"
+                    name="stockCount"
+                    value={
+                      form.stockCount
+                    }
+                    onChange={handleChange}
+                    className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Images */}
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-text">
+                  Main Image URL
+                </label>
+
+                <input
+                  name="image"
+                  value={
+                    form.image
+                  }
+                  onChange={handleChange}
+                  placeholder="https://..."
+                  className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-text">
+                  Additional Image URLs
+                </label>
+
+                <textarea
+                  name="images"
+                  value={
+                    form.images
+                  }
+                  onChange={handleChange}
+                  rows={3}
+                  placeholder="One URL per line"
+                  className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
+                />
+              </div>
+
+              {/* Product Details */}
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-text">
+                    Material
+                  </label>
+
+                  <input
+                    name="material"
+                    value={
+                      form.material
+                    }
+                    onChange={handleChange}
+                    className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-text">
+                    Style
+                  </label>
+
+                  <input
+                    name="style"
+                    value={
+                      form.style
+                    }
+                    onChange={handleChange}
+                    className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-text">
+                    Dimensions
+                  </label>
+
+                  <input
+                    name="dimensions"
+                    value={
+                      form.dimensions
+                    }
+                    onChange={handleChange}
+                    className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-text">
+                    Frame
+                  </label>
+
+                  <input
+                    name="frame"
+                    value={
+                      form.frame
+                    }
+                    onChange={handleChange}
+                    className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Badge */}
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-text">
+                  Badge
+                </label>
+
+                <input
+                  name="badge"
+                  value={
+                    form.badge
+                  }
+                  onChange={handleChange}
+                  placeholder="Best Seller"
+                  className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
+                />
+              </div>
+
+              {/* Flags */}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <label className="flex items-center gap-2 text-sm text-text">
+                  <input
+                    type="checkbox"
+                    name="isFeatured"
+                    checked={
+                      form.isFeatured
+                    }
+                    onChange={handleChange}
+                  />
+                  Featured
+                </label>
+
+                <label className="flex items-center gap-2 text-sm text-text">
+                  <input
+                    type="checkbox"
+                    name="isBestSeller"
+                    checked={
+                      form.isBestSeller
+                    }
+                    onChange={handleChange}
+                  />
+                  Best Seller
+                </label>
+
+                <label className="flex items-center gap-2 text-sm text-text">
+                  <input
+                    type="checkbox"
+                    name="isNew"
+                    checked={
+                      form.isNew
+                    }
+                    onChange={handleChange}
+                  />
+                  New Arrival
+                </label>
+
+                <label className="flex items-center gap-2 text-sm text-text">
+                  <input
+                    type="checkbox"
+                    name="customizable"
+                    checked={
+                      form.customizable
+                    }
+                    onChange={handleChange}
+                  />
+                  Customizable
+                </label>
+              </div>
+
+              <label className="flex items-center gap-2 text-sm text-text">
+                <input
+                  type="checkbox"
+                  name="handmade"
+                  checked={
+                    form.handmade
+                  }
+                  onChange={handleChange}
+                />
+                Handmade
+              </label>
+
+              {/* Buttons */}
+              <div className="flex flex-col gap-3 border-t border-primary/10 pt-6 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={closeForm}
+                  disabled={isSaving}
+                  className="rounded-full border border-primary/20 px-6 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-background transition hover:bg-primary-light disabled:opacity-60"
+                >
+                  {isSaving
+                    ? "Saving..."
+                    : editingId
+                      ? "Update Product"
+                      : "Create Product"}
+                </button>
+              </div>
+            </form>
+          </section>
+        )}
+
+        {/* Product Catalog */}
+        <section className="rounded-3xl border border-primary/10 bg-white shadow-sm">
+          <div className="border-b border-primary/10 p-6">
+            <h2 className="font-heading text-xl font-semibold text-primary">
+              Product Catalog
+            </h2>
+
+            <p className="mt-1 text-sm text-text/55">
+              {products.length} products
+            </p>
+          </div>
+
+          {isLoading ? (
+            <div className="p-10 text-center text-sm text-text/55">
+              Loading products...
+            </div>
+          ) : products.length === 0 ? (
+            <div className="p-10 text-center text-sm text-text/55">
+              No products found.
+            </div>
+          ) : (
+            <div className="divide-y divide-primary/10">
+              {products.map(
+                (product) => (
+                  <div
+                    key={product._id}
+                    className="flex flex-col gap-5 p-6 lg:flex-row lg:items-center lg:justify-between"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-semibold text-primary">
+                          {product.name}
+                        </h3>
+
+                        {product.badge && (
+                          <span className="rounded-full bg-secondary/20 px-2.5 py-1 text-[10px] font-bold uppercase text-primary">
+                            {product.badge}
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="mt-1 text-xs text-text/50">
+                        ID:{" "}
+                        {product._id}
+                      </p>
+
+                      <div className="mt-3 flex flex-wrap gap-3 text-xs text-text/60">
+                        <span>
+                          Category:{" "}
+                          {
+                            product.category
+                          }
+                        </span>
+
+                        <span>
+                          Price: ₹
+                          {Number(
+                            product.price ||
+                              0
+                          ).toLocaleString(
+                            "en-IN"
+                          )}
+                        </span>
+
+                        <span>
+                          Stock:{" "}
+                          {
+                            product.stock
+                          }
+                        </span>
+
+                        <span>
+                          Qty:{" "}
+                          {
+                            product.stockCount
+                          }
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex shrink-0 gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openEditForm(
+                            product
+                          )
+                        }
+                        className="inline-flex items-center gap-2 rounded-full border border-primary/20 px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/5"
+                      >
+                        <FiEdit2
+                          size={15}
+                        />
+                        Edit
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleDelete(
+                            product._id
+                          )
+                        }
+                        className="inline-flex items-center gap-2 rounded-full border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                      >
+                        <FiTrash2
+                          size={15}
+                        />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
+          )}
+        </section>
+      </Container>
+    </div>
+  );
+};
+
+export default AdminProducts;

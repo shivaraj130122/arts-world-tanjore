@@ -1,30 +1,53 @@
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+import api from "./api";
 
-const handleResponse = async (response) => {
-  const data = await response.json();
+export const getProducts = async () => {
+  const { data } = await api.get("/products");
+  return data;
+};
 
-  if (!response.ok) {
-    throw new Error(data.message || "Something went wrong");
-  }
+export const getProductById = async (id) => {
+  const { data } = await api.get(`/products/${id}`);
+  return data;
+};
+
+export const getProductsByCategory = async (category) => {
+  const { data } = await api.get("/products", {
+    params: {
+      category,
+    },
+  });
 
   return data;
 };
 
-export const getProducts = async () => {
-  const response = await fetch(`${API_BASE_URL}/products`);
-  return handleResponse(response);
-};
-
-export const getProductById = async (id) => {
-  const response = await fetch(`${API_BASE_URL}/products/${id}`);
-  return handleResponse(response);
-};
-
-export const getProductsByCategory = async (category) => {
-  const response = await fetch(
-    `${API_BASE_URL}/products?category=${encodeURIComponent(category)}`
+// Admin: create product
+export const createProduct = async (productData) => {
+  const { data } = await api.post(
+    "/products",
+    productData
   );
 
-  return handleResponse(response);
+  return data;
+};
+
+// Admin: update product
+export const updateProduct = async (
+  id,
+  productData
+) => {
+  const { data } = await api.put(
+    `/products/${id}`,
+    productData
+  );
+
+  return data;
+};
+
+// Admin: delete product
+export const deleteProduct = async (id) => {
+  const { data } = await api.delete(
+    `/products/${id}`
+  );
+
+  return data;
 };

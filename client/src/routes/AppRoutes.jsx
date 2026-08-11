@@ -11,6 +11,7 @@ import Contact from "../pages/Contact";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Cart from "../pages/Cart";
+import Checkout from "../pages/Checkout";
 import Wishlist from "../pages/Wishlist";
 import ProductDetails from "../pages/ProductDetails";
 import NotFound from "../pages/NotFound";
@@ -70,6 +71,12 @@ const AppRoutes = () => {
           element={<Cart />}
         />
 
+        {/* Checkout */}
+        <Route
+          path="checkout"
+          element={<Checkout />}
+        />
+
         <Route
           path="wishlist"
           element={<Wishlist />}
@@ -109,9 +116,11 @@ const AppRoutes = () => {
               path="collections"
               element={<AdminCollections />}
             />
+
+            {/* Messages */}
             <Route
-             path="messages"
-             element={<AdminMessages />}
+              path="messages"
+              element={<AdminMessages />}
             />
           </Route>
         </Route>

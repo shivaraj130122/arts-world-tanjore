@@ -167,10 +167,11 @@ const Cart = () => {
             <span>{formatCurrency(cartTotal)}</span>
           </div>
 
+         <Link to="/checkout">
           <Button size="lg" className="mt-6 w-full">
             Proceed to Checkout
-          </Button>
-
+           </Button>
+          </Link> 
           <Link
             to="/shop"
             className="mt-4 block text-center text-sm font-medium text-primary underline underline-offset-4"

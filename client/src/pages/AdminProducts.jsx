@@ -13,6 +13,7 @@ import {
   updateProduct,
   deleteProduct,
 } from "../services/productService";
+import { uploadImage } from "../services/uploadService";
 
 const emptyProduct = {
   _id: "",
@@ -50,6 +51,12 @@ const AdminProducts = () => {
   const [form, setForm] = useState({
     ...emptyProduct,
   });
+const [isUploadingMainImage, setIsUploadingMainImage] =
+  useState(false);
+
+const [isUploadingAdditionalImages, setIsUploadingAdditionalImages] =
+  useState(false);
+
 
   const loadProducts = async () => {
     try {
@@ -127,6 +134,114 @@ const AdminProducts = () => {
           : value,
     }));
   };
+ const handleMainImageUpload = async (event) => {
+  const file = event.target.files?.[0];
+
+  if (!file) {
+    return;
+  }
+
+  try {
+    setIsUploadingMainImage(true);
+
+    const data = await uploadImage(file);
+
+    if (!data?.success || !data?.image?.url) {
+      throw new Error(
+        data?.message || "Image upload failed"
+      );
+    }
+
+    setForm((current) => ({
+      ...current,
+      image: data.image.url,
+    }));
+
+    toast.success(
+      "Main image uploaded successfully"
+    );
+  } catch (error) {
+    console.error(
+      "Main image upload error:",
+      error
+    );
+
+    toast.error(
+      error?.response?.data?.message ||
+        error.message ||
+        "Unable to upload main image"
+    );
+  } finally {
+    setIsUploadingMainImage(false);
+    event.target.value = "";
+  }
+};
+
+const handleAdditionalImagesUpload = async (event) => {
+  const files = Array.from(
+    event.target.files || []
+  );
+
+  if (files.length === 0) {
+    return;
+  }
+
+  try {
+    setIsUploadingAdditionalImages(true);
+
+    const uploadedUrls = [];
+
+    for (const file of files) {
+      const data = await uploadImage(file);
+
+      if (!data?.success || !data?.image?.url) {
+        throw new Error(
+          data?.message ||
+            `Failed to upload ${file.name}`
+        );
+      }
+
+      uploadedUrls.push(data.image.url);
+    }
+
+    setForm((current) => {
+      const existingImages = String(
+        current.images || ""
+      )
+        .split("\n")
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+      return {
+        ...current,
+        images: [
+          ...existingImages,
+          ...uploadedUrls,
+        ].join("\n"),
+      };
+    });
+
+    toast.success(
+      `${uploadedUrls.length} image${
+        uploadedUrls.length > 1 ? "s" : ""
+      } uploaded successfully`
+    );
+  } catch (error) {
+    console.error(
+      "Additional images upload error:",
+      error
+    );
+
+    toast.error(
+      error?.response?.data?.message ||
+        error.message ||
+        "Unable to upload additional images"
+    );
+  } finally {
+    setIsUploadingAdditionalImages(false);
+    event.target.value = "";
+  }
+};
 
   const openCreateForm = () => {
     setEditingId(null);
@@ -649,38 +764,142 @@ const AdminProducts = () => {
               </div>
 
               {/* Images */}
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-text">
-                  Main Image URL
-                </label>
+          {/* Images */}
+<div className="space-y-6">
+  {/* Main Image */}
+  <div>
+    <label className="mb-2 block text-sm font-medium text-text">
+      Main Product Image
+    </label>
 
-                <input
-                  name="image"
-                  value={
-                    form.image
-                  }
-                  onChange={handleChange}
-                  placeholder="https://..."
-                  className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
-                />
-              </div>
+    <div className="rounded-2xl border border-primary/15 bg-background p-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <label className="inline-flex cursor-pointer items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-background transition hover:bg-primary-light">
+          {isUploadingMainImage
+            ? "Uploading..."
+            : "Upload Main Image"}
 
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-text">
-                  Additional Image URLs
-                </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleMainImageUpload}
+            disabled={isUploadingMainImage}
+            className="hidden"
+          />
+        </label>
 
-                <textarea
-                  name="images"
-                  value={
-                    form.images
-                  }
-                  onChange={handleChange}
-                  rows={3}
-                  placeholder="One URL per line"
-                  className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
-                />
-              </div>
+        <span className="text-xs text-text/50">
+          JPG, PNG, WEBP • Maximum 10 MB
+        </span>
+      </div>
+
+      {form.image && (
+        <div className="mt-4">
+          <p className="mb-2 text-xs font-medium text-text/60">
+            Main image preview
+          </p>
+
+          <div className="relative h-40 w-40 overflow-hidden rounded-xl border border-primary/10 bg-white">
+            <img
+              src={form.image}
+              alt="Main product preview"
+              className="h-full w-full object-cover"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Keep existing URL option */}
+      <div className="mt-4">
+        <label className="mb-1.5 block text-xs font-medium text-text/60">
+          Or use an existing image URL
+        </label>
+
+        <input
+          name="image"
+          value={form.image}
+          onChange={handleChange}
+          placeholder="https://..."
+          className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
+        />
+      </div>
+    </div>
+  </div>
+
+  {/* Additional Images */}
+  <div>
+    <label className="mb-2 block text-sm font-medium text-text">
+      Additional Product Images
+    </label>
+
+    <div className="rounded-2xl border border-primary/15 bg-background p-4">
+      <label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-primary/20 px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5">
+        {isUploadingAdditionalImages
+          ? "Uploading..."
+          : "Upload Multiple Images"}
+
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={handleAdditionalImagesUpload}
+          disabled={isUploadingAdditionalImages}
+          className="hidden"
+        />
+      </label>
+
+      <p className="mt-2 text-xs text-text/50">
+        Select multiple images at once.
+      </p>
+
+      {/* Image previews */}
+      {String(form.images || "").trim() && (
+        <div className="mt-5">
+          <p className="mb-3 text-xs font-medium text-text/60">
+            Additional image previews
+          </p>
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {String(form.images || "")
+              .split("\n")
+              .map((url) => url.trim())
+              .filter(Boolean)
+              .map((url, index) => (
+                <div
+                  key={`${url}-${index}`}
+                  className="overflow-hidden rounded-xl border border-primary/10 bg-white"
+                >
+                  <div className="aspect-square">
+                    <img
+                      src={url}
+                      alt={`Additional product ${index + 1}`}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* Keep existing URL option */}
+      <div className="mt-5">
+        <label className="mb-1.5 block text-xs font-medium text-text/60">
+          Or use existing image URLs
+        </label>
+
+        <textarea
+          name="images"
+          value={form.images}
+          onChange={handleChange}
+          rows={3}
+          placeholder="One URL per line"
+          className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
+        />
+      </div>
+    </div>
+  </div>
+</div>
 
               {/* Product Details */}
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">

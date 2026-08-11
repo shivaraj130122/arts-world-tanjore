@@ -14,6 +14,7 @@ const collectionRoutes = require("./routes/collectionRoutes");
 const authRoutes = require("./routes/authRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const uploadRoutes = require("./routes/uploadRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -70,6 +71,7 @@ app.use("/api/collections", collectionRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/upload", uploadRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {

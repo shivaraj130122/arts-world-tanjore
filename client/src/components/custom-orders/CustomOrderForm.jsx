@@ -64,12 +64,48 @@ const CustomOrderForm = () => {
     setImageError("");
   };
 
-  const onSubmit = async () => {
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    toast.success("Thank you! Your custom artwork request has been received.");
-    reset();
-    handleRemoveImage();
-  };
+ const onSubmit = async (data) => {
+  const whatsappNumber = "919880556398";
+
+  const message = `
+*New Custom Artwork Request*
+
+*Customer Details*
+Name: ${data.name}
+Phone / WhatsApp: ${data.phone}
+Email: ${data.email}
+
+*Artwork Details*
+Artwork Type: ${data.artworkType}
+Preferred Size: ${data.preferredSize || "Not specified"}
+Preferred Style: ${data.preferredStyle || "Not specified"}
+Budget: ${data.budget || "No preference"}
+Occasion: ${data.occasion || "Not specified"}
+
+ *Requirements*
+${data.details}
+
+Reference Image:
+${
+  referenceImage
+    ? "A reference image has been selected. Could you please resend the image here on WhatsApp so we can review it along with your requirements?"
+    : "No reference image provided."
+}
+`.trim();
+
+  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+    message
+  )}`;
+
+  window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+
+  toast.success(
+    "Request prepared. WhatsApp is opening with your details."
+  );
+
+  reset();
+  handleRemoveImage();
+};
 
   return (
     <section id="custom-order-form" className="section-y scroll-mt-20">
@@ -290,25 +326,36 @@ const CustomOrderForm = () => {
           </motion.form>
 
           {/* Side visual / info */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
-            className="lg:col-span-2"
-          >
-            <div className="aspect-[4/3] w-full rounded-3xl bg-gradient-to-br from-primary/10 via-secondary/15 to-primary/5" />
-            <div className="mt-6 rounded-2xl border border-secondary/30 bg-secondary/10 p-5">
-              <p className="flex items-center gap-2 text-sm font-semibold text-primary">
-                <FiImage size={15} /> Sharing a reference helps
-              </p>
-              <p className="mt-1.5 text-sm text-text/60">
-                A photo, sketch, or even a rough idea gives us a starting
-                point — it's optional, but it helps us understand your
-                vision faster.
-              </p>
-            </div>
-          </motion.div>
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  viewport={{ once: true, amount: 0.3 }}
+  transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
+  className="lg:col-span-2"
+>
+  {/* Custom artwork collage */}
+  <div className="overflow-hidden rounded-3xl border border-primary/10 bg-[#fff8ef] shadow-sm">
+    <img
+      src="/images/custom-orders-collage.png"
+      alt="Custom artwork creations"
+      className="block h-auto w-full object-contain"
+    />
+  </div>
+
+  {/* Reference information */}
+  <div className="mt-6 rounded-2xl border border-secondary/30 bg-secondary/10 p-5">
+    <p className="flex items-center gap-2 text-sm font-semibold text-primary">
+      <FiImage size={15} /> Sharing a reference helps
+    </p>
+
+    <p className="mt-1.5 text-sm text-text/60">
+      A photo, sketch, or even a rough idea gives us a starting
+      point — it's optional, but it helps us understand your
+      vision faster.
+    </p>
+  </div>
+</motion.div>
+          
         </div>
       </Container>
     </section>

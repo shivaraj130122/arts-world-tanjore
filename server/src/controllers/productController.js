@@ -3,9 +3,16 @@ const Product = require("../models/Product");
 // GET /api/products
 const getProducts = async (req, res) => {
   try {
-    const { category, featured, bestSeller, newArrival } = req.query;
+    const {
+      category,
+      featured,
+      bestSeller,
+      newArrival,
+    } = req.query;
 
-    const filter = {};
+    const filter = {
+      isActive: { $ne: false },
+    };
 
     if (category) {
       filter.category = category;
@@ -23,7 +30,9 @@ const getProducts = async (req, res) => {
       filter.isNew = true;
     }
 
-    const products = await Product.find(filter).sort({ createdAt: -1 });
+    const products = await Product.find(filter).sort({
+      createdAt: -1,
+    });
 
     res.status(200).json({
       success: true,
@@ -31,11 +40,39 @@ const getProducts = async (req, res) => {
       products,
     });
   } catch (error) {
-    console.error("Get products error:", error.message);
+    console.error(
+      "Get products error:",
+      error.message
+    );
 
     res.status(500).json({
       success: false,
       message: "Failed to fetch products",
+    });
+  }
+};
+
+// GET /api/products/admin/all
+const getAdminProducts = async (req, res) => {
+  try {
+    const products = await Product.find({}).sort({
+      createdAt: -1,
+    });
+
+    res.status(200).json({
+      success: true,
+      count: products.length,
+      products,
+    });
+  } catch (error) {
+    console.error(
+      "Get admin products error:",
+      error.message
+    );
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch admin products",
     });
   }
 };
@@ -119,7 +156,54 @@ const updateProduct = async (req, res) => {
     });
   }
 };
+ 
+// PATCH /api/products/:id/status
+const updateProductStatus = async (req, res) => {
+  try {
+    const { isActive } = req.body;
 
+    if (typeof isActive !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        message: "isActive must be true or false",
+      });
+    }
+
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      { isActive },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: isActive
+        ? "Product activated successfully"
+        : "Product muted successfully",
+      product,
+    });
+  } catch (error) {
+    console.error(
+      "Update product status error:",
+      error.message
+    );
+
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 // DELETE /api/products/:id
 const deleteProduct = async (req, res) => {
   try {
@@ -148,8 +232,10 @@ const deleteProduct = async (req, res) => {
 
 module.exports = {
   getProducts,
+  getAdminProducts,
   getProductById,
   createProduct,
   updateProduct,
   deleteProduct,
+  updateProductStatus,
 };

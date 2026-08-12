@@ -5,6 +5,11 @@ export const getProducts = async () => {
   return data;
 };
 
+// Admin: get all products including muted products
+export const getAdminProducts = async () => {
+  const { data } = await api.get("/products/admin/all");
+  return data;
+};
 export const getProductById = async (id) => {
   const { data } = await api.get(`/products/${id}`);
   return data;
@@ -47,6 +52,20 @@ export const updateProduct = async (
 export const deleteProduct = async (id) => {
   const { data } = await api.delete(
     `/products/${id}`
+  );
+
+  return data;
+};
+// Admin: activate / mute product
+export const updateProductStatus = async (
+  id,
+  isActive
+) => {
+  const { data } = await api.patch(
+    `/products/${id}/status`,
+    {
+      isActive,
+    }
   );
 
   return data;

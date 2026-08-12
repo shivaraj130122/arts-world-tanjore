@@ -8,11 +8,13 @@ import {
 import toast from "react-hot-toast";
 import Container from "../components/ui/Container";
 import {
-  getProducts,
+  getAdminProducts,
   createProduct,
   updateProduct,
   deleteProduct,
+  updateProductStatus,
 } from "../services/productService";
+
 import { uploadImage } from "../services/uploadService";
 
 const emptyProduct = {
@@ -62,7 +64,7 @@ const [isUploadingAdditionalImages, setIsUploadingAdditionalImages] =
     try {
       setIsLoading(true);
 
-      const data = await getProducts();
+      const data = await getAdminProducts();
 
       setProducts(data.products || []);
     } catch (error) {
@@ -86,7 +88,7 @@ const [isUploadingAdditionalImages, setIsUploadingAdditionalImages] =
 
     const loadInitialProducts = async () => {
       try {
-        const data = await getProducts();
+        const data = await getAdminProducts();
 
         if (!cancelled) {
           setProducts(data.products || []);
@@ -171,7 +173,10 @@ const [isUploadingAdditionalImages, setIsUploadingAdditionalImages] =
         error.message ||
         "Unable to upload main image"
     );
-  } finally {
+  } 
+
+
+finally {
     setIsUploadingMainImage(false);
     event.target.value = "";
   }
@@ -243,18 +248,64 @@ const handleAdditionalImagesUpload = async (event) => {
   }
 };
 
-  const openCreateForm = () => {
-    setEditingId(null);
+const handleToggleProductStatus = async (product) => {
+  const nextStatus = product.isActive === false;
 
-    setForm({
-      ...emptyProduct,
-    });
+  try {
+    const data = await updateProductStatus(
+      product._id,
+      nextStatus
+    );
 
-    setShowForm(true);
-  };
+    if (!data?.success) {
+      throw new Error(
+        data?.message ||
+          "Unable to update product status"
+      );
+    }
 
-  const openEditForm = (product) => {
-    setEditingId(product._id);
+    setProducts((current) =>
+      current.map((item) =>
+        item._id === product._id
+          ? {
+              ...item,
+              isActive: nextStatus,
+            }
+          : item
+      )
+    );
+
+    toast.success(
+      nextStatus
+        ? "Product activated successfully"
+        : "Product muted successfully"
+    );
+  } catch (error) {
+    console.error(
+      "Update product status error:",
+      error
+    );
+
+    toast.error(
+      error?.response?.data?.message ||
+        error.message ||
+        "Unable to update product status"
+    );
+  }
+};
+
+const openCreateForm = () => {
+  setEditingId(null);
+
+  setForm({
+    ...emptyProduct,
+  });
+
+  setShowForm(true);
+};
+
+const openEditForm = (product) => {
+  setEditingId(product._id);
 
     setForm({
       _id: String(product._id ?? ""),
@@ -1092,26 +1143,41 @@ const handleAdditionalImagesUpload = async (event) => {
               No products found.
             </div>
           ) : (
-            <div className="divide-y divide-primary/10">
-              {products.map(
-                (product) => (
-                  <div
-                    key={product._id}
-                    className="flex flex-col gap-5 p-6 lg:flex-row lg:items-center lg:justify-between"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-semibold text-primary">
-                          {product.name}
-                        </h3>
+         <div className="divide-y divide-primary/10">
+  {products.map(
+    (product) => (
+      <div
+        key={product._id}
+        className="flex flex-col gap-5 p-6 lg:flex-row lg:items-center lg:justify-between"
+      >
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-semibold text-primary">
+              {product.name}
+            </h3>
 
-                        {product.badge && (
-                          <span className="rounded-full bg-secondary/20 px-2.5 py-1 text-[10px] font-bold uppercase text-primary">
-                            {product.badge}
-                          </span>
-                        )}
-                      </div>
+            {product.badge && (
+              <span className="rounded-full bg-secondary/20 px-2.5 py-1 text-[10px] font-bold uppercase text-primary">
+                {product.badge}
+              </span>
+            )}
 
+            {product.isActive === false ? (
+              <span className="rounded-full bg-red-100 px-2.5 py-1 text-[10px] font-bold uppercase text-red-700">
+                Muted
+              </span>
+            ) : (
+              <span className="rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-bold uppercase text-green-700">
+                Active
+              </span>
+            )}
+          </div>
+
+          <p className="mt-1 text-xs text-text/50">
+            ID: {product._id}
+          </p>
+
+      
                       <p className="mt-1 text-xs text-text/50">
                         ID:{" "}
                         {product._id}
@@ -1150,38 +1216,46 @@ const handleAdditionalImagesUpload = async (event) => {
                         </span>
                       </div>
                     </div>
+                    
+<div className="flex shrink-0 flex-wrap gap-2">
+  <button
+    type="button"
+    onClick={() =>
+      openEditForm(product)
+    }
+    className="inline-flex items-center gap-2 rounded-full border border-primary/20 px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/5"
+  >
+    <FiEdit2 size={15} />
+    Edit
+  </button>
 
-                    <div className="flex shrink-0 gap-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          openEditForm(
-                            product
-                          )
-                        }
-                        className="inline-flex items-center gap-2 rounded-full border border-primary/20 px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/5"
-                      >
-                        <FiEdit2
-                          size={15}
-                        />
-                        Edit
-                      </button>
+  <button
+    type="button"
+    onClick={() =>
+      handleToggleProductStatus(product)
+    }
+    className={
+      product.isActive === false
+        ? "inline-flex items-center gap-2 rounded-full border border-green-200 px-4 py-2.5 text-sm font-semibold text-green-700 transition hover:bg-green-50"
+        : "inline-flex items-center gap-2 rounded-full border border-amber-200 px-4 py-2.5 text-sm font-semibold text-amber-700 transition hover:bg-amber-50"
+    }
+  >
+    {product.isActive === false
+      ? "Unmute"
+      : "Mute"}
+  </button>
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleDelete(
-                            product._id
-                          )
-                        }
-                        className="inline-flex items-center gap-2 rounded-full border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
-                      >
-                        <FiTrash2
-                          size={15}
-                        />
-                        Delete
-                      </button>
-                    </div>
+  <button
+    type="button"
+    onClick={() =>
+      handleDelete(product._id)
+    }
+    className="inline-flex items-center gap-2 rounded-full border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+  >
+    <FiTrash2 size={15} />
+    Delete
+  </button>
+</div>
                   </div>
                 )
               )}

@@ -33,7 +33,7 @@ const TanjoreHeritage = () => {
             <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-secondary/15 to-primary/5">
               {/* Main Tanjore Art Image */}
               <img
-                src="/images/home/tanjore-heritage.jpeg"
+                src="/images/home/tanjore-heritage.webp"
                 alt="Traditional Tanjore artwork"
                 className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
                 loading="lazy"

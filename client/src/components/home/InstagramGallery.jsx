@@ -13,36 +13,35 @@ import {
 const INSTAGRAM_MEDIA = [
   {
     type: "image",
-    src: "/images/home/instagram-1.png",
+    src: "/images/home/instagram-1.webp",
     alt: "Hand-painted green blouse with peacock artwork",
   },
   {
     type: "image",
-    src: "/images/home/instagram-2.png",
+    src: "/images/home/instagram-2.webp",
     alt: "Hand-painted traditional skirt",
   },
   {
     type: "image",
-    src: "/images/home/instagram-3.png",
+    src: "/images/home/instagram-3.webp",
     alt: "Hand-painted gold blouse with peacock artwork",
   },
   {
     type: "image",
-    src: "/images/home/instagram-4.png",
+    src: "/images/home/instagram-4.webp",
     alt: "Detailed peacock artwork",
   },
   {
     type: "image",
-    src: "/images/home/instagram-5.png",
+    src: "/images/home/instagram-5.webp",
     alt: "Hand-painted gold blouse",
   },
   {
     type: "image",
-    src: "/images/home/instagram-6.png",
+    src: "/images/home/instagram-6.webp",
     alt: "Hand-painted black blouse",
   },
 ];
-
 const InstagramGallery = () => {
   const instagram = SOCIAL_LINKS.find(
     (social) => social.label === "Instagram"

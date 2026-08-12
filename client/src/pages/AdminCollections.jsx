@@ -16,6 +16,8 @@ import {
   deleteCollection,
 } from "../services/collectionService";
 
+import { uploadImage } from "../services/uploadService";
+
 const EMPTY_COLLECTION = {
   _id: "",
   title: "",
@@ -37,6 +39,9 @@ const AdminCollections = () => {
   const [isSaving, setIsSaving] =
     useState(false);
 
+  const [isUploadingImage, setIsUploadingImage] =
+    useState(false);
+
   const [showForm, setShowForm] =
     useState(false);
 
@@ -50,35 +55,34 @@ const AdminCollections = () => {
   useEffect(() => {
     let cancelled = false;
 
-    const loadInitialCollections =
-      async () => {
-        try {
-          const data =
-            await getCollections();
+    const loadInitialCollections = async () => {
+      try {
+        const data =
+          await getCollections();
 
-          if (!cancelled) {
-            setCollections(
-              data.collections || []
-            );
-          }
-        } catch (error) {
-          if (!cancelled) {
-            console.error(
-              "Load collections error:",
-              error
-            );
-
-            toast.error(
-              error.message ||
-                "Unable to load collections"
-            );
-          }
-        } finally {
-          if (!cancelled) {
-            setIsLoading(false);
-          }
+        if (!cancelled) {
+          setCollections(
+            data.collections || []
+          );
         }
-      };
+      } catch (error) {
+        if (!cancelled) {
+          console.error(
+            "Load collections error:",
+            error
+          );
+
+          toast.error(
+            error.message ||
+              "Unable to load collections"
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
 
     loadInitialCollections();
 
@@ -87,35 +91,32 @@ const AdminCollections = () => {
     };
   }, []);
 
-  const loadCollections =
-    async () => {
-      try {
-        setIsLoading(true);
+  const loadCollections = async () => {
+    try {
+      setIsLoading(true);
 
-        const data =
-          await getCollections();
+      const data =
+        await getCollections();
 
-        setCollections(
-          data.collections || []
-        );
-      } catch (error) {
-        console.error(
-          "Load collections error:",
-          error
-        );
+      setCollections(
+        data.collections || []
+      );
+    } catch (error) {
+      console.error(
+        "Load collections error:",
+        error
+      );
 
-        toast.error(
-          error.message ||
-            "Unable to load collections"
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      toast.error(
+        error.message ||
+          "Unable to load collections"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const handleChange = (
-    event
-  ) => {
+  const handleChange = (event) => {
     const {
       name,
       value,
@@ -125,7 +126,6 @@ const AdminCollections = () => {
 
     setForm((current) => ({
       ...current,
-
       [name]:
         type === "checkbox"
           ? checked
@@ -133,68 +133,118 @@ const AdminCollections = () => {
     }));
   };
 
-  const openCreateForm =
-    () => {
-      setEditingId(null);
+  const handleImageUpload = async (event) => {
+    const file =
+      event.target.files?.[0];
 
-      setForm({
-        ...EMPTY_COLLECTION,
-      });
+    if (!file) {
+      return;
+    }
 
-      setShowForm(true);
-    };
+    try {
+      setIsUploadingImage(true);
 
-  const openEditForm =
-    (collection) => {
-      setEditingId(
-        collection._id
+      const data =
+        await uploadImage(file);
+
+      if (
+        !data?.success ||
+        !data?.image?.url
+      ) {
+        throw new Error(
+          data?.message ||
+            "Image upload failed"
+        );
+      }
+
+      setForm((current) => ({
+        ...current,
+        image: data.image.url,
+      }));
+
+      toast.success(
+        "Collection image uploaded successfully"
+      );
+    } catch (error) {
+      console.error(
+        "Collection image upload error:",
+        error
       );
 
-      setForm({
-        _id: String(
-          collection._id ?? ""
-        ),
+      toast.error(
+        error?.response?.data?.message ||
+          error.message ||
+          "Unable to upload collection image"
+      );
+    } finally {
+      setIsUploadingImage(false);
 
-        title: String(
-          collection.title ?? ""
-        ),
+      event.target.value = "";
+    }
+  };
 
-        description: String(
-          collection.description ??
-            ""
-        ),
+  const openCreateForm = () => {
+    setEditingId(null);
 
-        slug: String(
-          collection.slug ?? ""
-        ),
+    setForm({
+      ...EMPTY_COLLECTION,
+    });
 
-        image: String(
-          collection.image ?? ""
-        ),
+    setShowForm(true);
+  };
 
-        category: String(
-          collection.category ??
-            ""
-        ),
+  const openEditForm = (collection) => {
+    setEditingId(
+      collection._id
+    );
 
-        isActive:
-          collection.isActive !==
-          false,
+    setForm({
+      _id: String(
+        collection._id ?? ""
+      ),
 
-        sortOrder:
-          collection.sortOrder ??
-          0,
-      });
+      title: String(
+        collection.title ?? ""
+      ),
 
-      setShowForm(true);
-    };
+      description: String(
+        collection.description ??
+          ""
+      ),
+
+      slug: String(
+        collection.slug ?? ""
+      ),
+
+      image: String(
+        collection.image ?? ""
+      ),
+
+      category: String(
+        collection.category ?? ""
+      ),
+
+      isActive:
+        collection.isActive !==
+        false,
+
+      sortOrder:
+        collection.sortOrder ?? 0,
+    });
+
+    setShowForm(true);
+  };
 
   const closeForm = () => {
-    if (isSaving) {
+    if (
+      isSaving ||
+      isUploadingImage
+    ) {
       return;
     }
 
     setShowForm(false);
+
     setEditingId(null);
 
     setForm({
@@ -388,8 +438,11 @@ const AdminCollections = () => {
                 onClick={
                   closeForm
                 }
-                disabled={isSaving}
-                className="grid h-10 w-10 place-items-center rounded-full text-text/60 transition hover:bg-primary/10 hover:text-primary"
+                disabled={
+                  isSaving ||
+                  isUploadingImage
+                }
+                className="grid h-10 w-10 place-items-center rounded-full text-text/60 transition hover:bg-primary/10 hover:text-primary disabled:opacity-50"
                 aria-label="Close form"
               >
                 <FiX size={20} />
@@ -411,7 +464,9 @@ const AdminCollections = () => {
 
                   <input
                     name="_id"
-                    value={form._id}
+                    value={
+                      form._id
+                    }
                     onChange={
                       handleChange
                     }
@@ -501,23 +556,57 @@ const AdminCollections = () => {
                   />
                 </div>
 
-                {/* Image */}
+                {/* Collection Image */}
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-text">
-                    Image URL
+                    Collection Image
                   </label>
 
-                  <input
-                    name="image"
-                    value={
-                      form.image
-                    }
-                    onChange={
-                      handleChange
-                    }
-                    placeholder="https://..."
-                    className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
-                  />
+                  <div className="space-y-3">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={
+                        handleImageUpload
+                      }
+                      disabled={
+                        isUploadingImage ||
+                        isSaving
+                      }
+                      className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+
+                    {isUploadingImage && (
+                      <div className="rounded-lg bg-primary/5 px-4 py-3 text-sm text-primary">
+                        Uploading image to
+                        Cloudinary...
+                      </div>
+                    )}
+
+                    {form.image && (
+                      <div className="overflow-hidden rounded-xl border border-primary/10">
+                        <img
+                          src={
+                            form.image
+                          }
+                          alt="Collection preview"
+                          className="h-48 w-full object-cover"
+                        />
+                      </div>
+                    )}
+
+                    <input
+                      name="image"
+                      value={
+                        form.image
+                      }
+                      onChange={
+                        handleChange
+                      }
+                      placeholder="Cloudinary image URL"
+                      className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -536,6 +625,7 @@ const AdminCollections = () => {
                     handleChange
                   }
                   rows={4}
+                  placeholder="Describe this collection..."
                   className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
                 />
               </div>
@@ -564,9 +654,10 @@ const AdminCollections = () => {
                     closeForm
                   }
                   disabled={
-                    isSaving
+                    isSaving ||
+                    isUploadingImage
                   }
-                  className="rounded-full border border-primary/20 px-6 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5"
+                  className="rounded-full border border-primary/20 px-6 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5 disabled:opacity-60"
                 >
                   Cancel
                 </button>
@@ -574,7 +665,8 @@ const AdminCollections = () => {
                 <button
                   type="submit"
                   disabled={
-                    isSaving
+                    isSaving ||
+                    isUploadingImage
                   }
                   className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-background transition hover:bg-primary-light disabled:opacity-60"
                 >
@@ -660,10 +752,8 @@ const AdminCollections = () => {
 
                         <span>
                           Category:{" "}
-                          {
-                            collection.category ||
-                            "—"
-                          }
+                          {collection.category ||
+                            "—"}
                         </span>
 
                         <span>
@@ -680,6 +770,20 @@ const AdminCollections = () => {
                             collection.description
                           }
                         </p>
+                      )}
+
+                      {collection.image && (
+                        <div className="mt-4">
+                          <img
+                            src={
+                              collection.image
+                            }
+                            alt={
+                              collection.title
+                            }
+                            className="h-24 w-36 rounded-xl object-cover"
+                          />
+                        </div>
                       )}
                     </div>
 

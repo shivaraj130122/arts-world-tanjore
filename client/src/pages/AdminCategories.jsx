@@ -6,13 +6,17 @@ import {
   FiX,
 } from "react-icons/fi";
 import toast from "react-hot-toast";
+
 import Container from "../components/ui/Container";
+
 import {
   getCategories,
   createCategory,
   updateCategory,
   deleteCategory,
 } from "../services/categoryService";
+
+import { uploadImage } from "../services/uploadService";
 
 const emptyCategory = {
   _id: "",
@@ -25,13 +29,15 @@ const emptyCategory = {
 };
 
 const AdminCategories = () => {
-  const [categories, setCategories] =
-    useState([]);
+  const [categories, setCategories] = useState([]);
 
   const [isLoading, setIsLoading] =
     useState(true);
 
   const [isSaving, setIsSaving] =
+    useState(false);
+
+  const [isUploadingImage, setIsUploadingImage] =
     useState(false);
 
   const [showForm, setShowForm] =
@@ -40,43 +46,40 @@ const AdminCategories = () => {
   const [editingId, setEditingId] =
     useState(null);
 
-  const [form, setForm] =
-    useState({
-      ...emptyCategory,
-    });
+  const [form, setForm] = useState({
+    ...emptyCategory,
+  });
 
   useEffect(() => {
     let cancelled = false;
 
-    const loadInitialCategories =
-      async () => {
-        try {
-          const data =
-            await getCategories();
+    const loadInitialCategories = async () => {
+      try {
+        const data = await getCategories();
 
-          if (!cancelled) {
-            setCategories(
-              data.categories || []
-            );
-          }
-        } catch (error) {
-          if (!cancelled) {
-            console.error(
-              "Load categories error:",
-              error
-            );
-
-            toast.error(
-              error.message ||
-                "Unable to load categories"
-            );
-          }
-        } finally {
-          if (!cancelled) {
-            setIsLoading(false);
-          }
+        if (!cancelled) {
+          setCategories(
+            data.categories || []
+          );
         }
-      };
+      } catch (error) {
+        if (!cancelled) {
+          console.error(
+            "Load categories error:",
+            error
+          );
+
+          toast.error(
+            error.message ||
+              "Unable to load categories"
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
 
     loadInitialCategories();
 
@@ -85,35 +88,31 @@ const AdminCategories = () => {
     };
   }, []);
 
-  const loadCategories =
-    async () => {
-      try {
-        setIsLoading(true);
+  const loadCategories = async () => {
+    try {
+      setIsLoading(true);
 
-        const data =
-          await getCategories();
+      const data = await getCategories();
 
-        setCategories(
-          data.categories || []
-        );
-      } catch (error) {
-        console.error(
-          "Load categories error:",
-          error
-        );
+      setCategories(
+        data.categories || []
+      );
+    } catch (error) {
+      console.error(
+        "Load categories error:",
+        error
+      );
 
-        toast.error(
-          error.message ||
-            "Unable to load categories"
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      toast.error(
+        error.message ||
+          "Unable to load categories"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const handleChange = (
-    event
-  ) => {
+  const handleChange = (event) => {
     const {
       name,
       value,
@@ -130,53 +129,109 @@ const AdminCategories = () => {
     }));
   };
 
-  const openCreateForm =
-    () => {
-      setEditingId(null);
+  const handleImageUpload = async (event) => {
+    const file = event.target.files?.[0];
 
-      setForm({
-        ...emptyCategory,
-      });
+    if (!file) {
+      return;
+    }
 
-      setShowForm(true);
-    };
+    try {
+      setIsUploadingImage(true);
 
-  const openEditForm =
-    (category) => {
-      setEditingId(
-        category._id
+      const data = await uploadImage(file);
+
+      if (
+        !data?.success ||
+        !data?.image?.url
+      ) {
+        throw new Error(
+          data?.message ||
+            "Image upload failed"
+        );
+      }
+
+      setForm((current) => ({
+        ...current,
+        image: data.image.url,
+      }));
+
+      toast.success(
+        "Category image uploaded successfully"
+      );
+    } catch (error) {
+      console.error(
+        "Category image upload error:",
+        error
       );
 
-      setForm({
-        _id: String(
-          category._id ?? ""
-        ),
-        title: String(
-          category.title ?? ""
-        ),
-        description: String(
-          category.description ??
-            ""
-        ),
-        slug: String(
-          category.slug ?? ""
-        ),
-        itemCount:
-          category.itemCount ??
-          0,
-        image: String(
-          category.image ?? ""
-        ),
-        isActive:
-          category.isActive !==
-          false,
-      });
+      toast.error(
+        error?.response?.data?.message ||
+          error.message ||
+          "Unable to upload category image"
+      );
+    } finally {
+      setIsUploadingImage(false);
+      event.target.value = "";
+    }
+  };
 
-      setShowForm(true);
-    };
+  const openCreateForm = () => {
+    setEditingId(null);
+
+    setForm({
+      ...emptyCategory,
+    });
+
+    setShowForm(true);
+  };
+
+  const openEditForm = (category) => {
+    setEditingId(
+      category._id
+    );
+
+    setForm({
+      _id: String(
+        category._id ?? ""
+      ),
+
+      title: String(
+        category.title ?? ""
+      ),
+
+      description: String(
+        category.description ??
+          ""
+      ),
+
+      slug: String(
+        category.slug ?? ""
+      ),
+
+      itemCount:
+        category.itemCount ??
+        0,
+
+      image: String(
+        category.image ?? ""
+      ),
+
+      isActive:
+        category.isActive !==
+        false,
+    });
+
+    setShowForm(true);
+  };
 
   const closeForm = () => {
-    if (isSaving) return;
+    if (
+      isSaving ||
+      isUploadingImage
+    ) {
+      return;
+    }
 
     setShowForm(false);
     setEditingId(null);
@@ -372,8 +427,11 @@ const AdminCategories = () => {
                 onClick={
                   closeForm
                 }
-                disabled={isSaving}
-                className="grid h-10 w-10 place-items-center rounded-full text-text/60 transition hover:bg-primary/10 hover:text-primary"
+                disabled={
+                  isSaving ||
+                  isUploadingImage
+                }
+                className="grid h-10 w-10 place-items-center rounded-full text-text/60 transition hover:bg-primary/10 hover:text-primary disabled:opacity-50"
                 aria-label="Close form"
               >
                 <FiX size={20} />
@@ -387,6 +445,7 @@ const AdminCategories = () => {
               className="space-y-6"
             >
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                {/* Category ID */}
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-text">
                     Category ID *
@@ -394,7 +453,9 @@ const AdminCategories = () => {
 
                   <input
                     name="_id"
-                    value={form._id}
+                    value={
+                      form._id
+                    }
                     onChange={
                       handleChange
                     }
@@ -408,6 +469,7 @@ const AdminCategories = () => {
                   />
                 </div>
 
+                {/* Slug */}
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-text">
                     Slug *
@@ -426,6 +488,7 @@ const AdminCategories = () => {
                   />
                 </div>
 
+                {/* Title */}
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-text">
                     Title *
@@ -444,6 +507,7 @@ const AdminCategories = () => {
                   />
                 </div>
 
+                {/* Item Count */}
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-text">
                     Item Count
@@ -464,6 +528,7 @@ const AdminCategories = () => {
                 </div>
               </div>
 
+              {/* Description */}
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-text">
                   Description *
@@ -482,24 +547,60 @@ const AdminCategories = () => {
                 />
               </div>
 
+              {/* Category Image Upload */}
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-text">
-                  Image URL
+                  Category Image
                 </label>
 
-                <input
-                  name="image"
-                  value={
-                    form.image
-                  }
-                  onChange={
-                    handleChange
-                  }
-                  placeholder="https://..."
-                  className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
-                />
+                <div className="space-y-3">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={
+                      handleImageUpload
+                    }
+                    disabled={
+                      isUploadingImage ||
+                      isSaving
+                    }
+                    className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary disabled:cursor-not-allowed disabled:opacity-60"
+                  />
+
+                  {isUploadingImage && (
+                    <div className="rounded-lg bg-primary/5 px-4 py-3 text-sm text-primary">
+                      Uploading image to
+                      Cloudinary...
+                    </div>
+                  )}
+
+                  {form.image && (
+                    <div className="overflow-hidden rounded-xl border border-primary/10">
+                      <img
+                        src={
+                          form.image
+                        }
+                        alt="Category preview"
+                        className="h-48 w-full object-cover"
+                      />
+                    </div>
+                  )}
+
+                  <input
+                    name="image"
+                    value={
+                      form.image
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder="Cloudinary image URL"
+                    className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
+                  />
+                </div>
               </div>
 
+              {/* Active */}
               <label className="flex items-center gap-2 text-sm text-text">
                 <input
                   type="checkbox"
@@ -515,6 +616,7 @@ const AdminCategories = () => {
                 Active Category
               </label>
 
+              {/* Buttons */}
               <div className="flex flex-col gap-3 border-t border-primary/10 pt-6 sm:flex-row sm:justify-end">
                 <button
                   type="button"
@@ -522,9 +624,10 @@ const AdminCategories = () => {
                     closeForm
                   }
                   disabled={
-                    isSaving
+                    isSaving ||
+                    isUploadingImage
                   }
-                  className="rounded-full border border-primary/20 px-6 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5"
+                  className="rounded-full border border-primary/20 px-6 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5 disabled:opacity-60"
                 >
                   Cancel
                 </button>
@@ -532,7 +635,8 @@ const AdminCategories = () => {
                 <button
                   type="submit"
                   disabled={
-                    isSaving
+                    isSaving ||
+                    isUploadingImage
                   }
                   className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-background transition hover:bg-primary-light disabled:opacity-60"
                 >
@@ -629,6 +733,20 @@ const AdminCategories = () => {
                           category.description
                         }
                       </p>
+
+                      {category.image && (
+                        <div className="mt-4">
+                          <img
+                            src={
+                              category.image
+                            }
+                            alt={
+                              category.title
+                            }
+                            className="h-24 w-36 rounded-xl object-cover"
+                          />
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex shrink-0 gap-2">

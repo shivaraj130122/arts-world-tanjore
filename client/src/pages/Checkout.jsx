@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   FiArrowLeft,
   FiCheck,
@@ -7,6 +7,7 @@ import {
   FiMail,
   FiPhone,
   FiUser,
+  FiMessageCircle,
 } from "react-icons/fi";
 import toast from "react-hot-toast";
 
@@ -17,9 +18,14 @@ import EmptyState from "../components/ui/EmptyState";
 import { useCart } from "../hooks/useCart";
 import { formatCurrency } from "../utils/helpers";
 
-const Checkout = () => {
-  const navigate = useNavigate();
+// ============================================================
+// CHANGE THIS TO YOUR BUSINESS WHATSAPP NUMBER
+// India example: 919876543210
+// Do NOT use +, spaces, or hyphens.
+// ============================================================
+const WHATSAPP_NUMBER = "919880556398";
 
+const Checkout = () => {
   const { items, cartTotal } = useCart();
 
   const [formData, setFormData] = useState({
@@ -107,6 +113,14 @@ const Checkout = () => {
       return false;
     }
 
+    if (
+      !WHATSAPP_NUMBER ||
+      WHATSAPP_NUMBER === "YOUR_WHATSAPP_NUMBER"
+    ) {
+      toast.error("WhatsApp number is not configured");
+      return false;
+    }
+
     return true;
   };
 
@@ -120,26 +134,80 @@ const Checkout = () => {
     setIsSubmitting(true);
 
     try {
-      /*
-       * Payment will be connected in Phase 9.4.
-       *
-       * For Phase 9.2 we only verify the checkout information
-       * and move to the next payment step.
-       */
+      const customerName = formData.name.trim();
+      const email = formData.email.trim();
+      const phone = formData.phone.trim();
+      const address = formData.address.trim();
+      const city = formData.city.trim();
+      const state = formData.state.trim();
+      const pincode = formData.pincode.trim();
+
+      const productLines = items
+        .map((item, index) => {
+          const itemPrice = Number(item.price) || 0;
+          const itemTotal = itemPrice * item.quantity;
+
+          return [
+            `${index + 1}. ${item.name}`,
+            `   Quantity: ${item.quantity}`,
+            `   Price: ${formatCurrency(itemPrice)}`,
+            `   Item Total: ${formatCurrency(itemTotal)}`,
+          ].join("\n");
+        })
+        .join("\n\n");
+
+      const message = [
+        "Hello Bhavani's Art World,",
+        "",
+        "I would like to place an order.",
+        "",
+        "━━━━━━━━━━━━━━━━━━━━",
+        "CUSTOMER DETAILS",
+        "━━━━━━━━━━━━━━━━━━━━",
+        `Name: ${customerName}`,
+        `Email: ${email}`,
+        `Phone: ${phone}`,
+        "",
+        "DELIVERY ADDRESS",
+        "━━━━━━━━━━━━━━━━━━━━",
+        address,
+        `${city}, ${state} - ${pincode}`,
+        "",
+        "ORDER DETAILS",
+        "━━━━━━━━━━━━━━━━━━━━",
+        productLines,
+        "",
+        "━━━━━━━━━━━━━━━━━━━━",
+        `TOTAL AMOUNT: ${formatCurrency(cartTotal)}`,
+        "━━━━━━━━━━━━━━━━━━━━",
+        "",
+        "Please confirm the availability of the products",
+        "and send me the payment details.",
+        "",
+        "Thank you.",
+      ].join("\n");
+
+      const whatsappUrl =
+        `https://wa.me/${WHATSAPP_NUMBER}` +
+        `?text=${encodeURIComponent(message)}`;
+
+      toast.success("Opening WhatsApp...");
+
       await new Promise((resolve) => {
         setTimeout(resolve, 500);
       });
 
-      toast.success("Checkout information saved");
-
-      navigate("/checkout/payment", {
-        state: {
-          customer: formData,
-        },
-      });
+      window.open(
+        whatsappUrl,
+        "_blank",
+        "noopener,noreferrer"
+      );
     } catch (error) {
-      console.error("Checkout error:", error);
-      toast.error("Unable to continue to payment");
+      console.error("WhatsApp checkout error:", error);
+
+      toast.error(
+        "Unable to open WhatsApp. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -176,7 +244,7 @@ const Checkout = () => {
           </Link>
 
           <p className="mt-6 text-sm font-medium uppercase tracking-[0.2em] text-secondary-dark">
-            Secure Checkout
+            Order Checkout
           </p>
 
           <h1 className="mt-2 font-heading text-3xl font-semibold text-primary sm:text-4xl">
@@ -184,8 +252,8 @@ const Checkout = () => {
           </h1>
 
           <p className="mt-2 max-w-2xl text-sm text-text/60 sm:text-base">
-            Enter your delivery information carefully. We will use these
-            details for your order and delivery.
+            Enter your delivery information carefully. We will
+            send your order details directly to our WhatsApp.
           </p>
         </div>
 
@@ -388,7 +456,7 @@ const Checkout = () => {
                 </div>
               </div>
 
-              {/* Continue */}
+              {/* WhatsApp checkout */}
               <div className="mt-8 border-t border-primary/10 pt-6">
                 <Button
                   type="submit"
@@ -396,13 +464,18 @@ const Checkout = () => {
                   className="w-full"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting
-                    ? "Preparing Payment..."
-                    : "Continue to Payment"}
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <FiMessageCircle size={19} />
+
+                    {isSubmitting
+                      ? "Opening WhatsApp..."
+                      : "Continue to WhatsApp"}
+                  </span>
                 </Button>
 
                 <p className="mt-3 text-center text-xs text-text/45">
-                  Payment options will be available on the next step.
+                  Your order details will be prepared and
+                  opened in WhatsApp for confirmation.
                 </p>
               </div>
             </form>
@@ -439,7 +512,8 @@ const Checkout = () => {
 
                     <p className="mt-1 text-sm font-semibold text-primary">
                       {formatCurrency(
-                        (Number(item.price) || 0) * item.quantity
+                        (Number(item.price) || 0) *
+                          item.quantity
                       )}
                     </p>
                   </div>
@@ -474,12 +548,13 @@ const Checkout = () => {
 
                 <div>
                   <p className="text-sm font-medium text-primary">
-                    Secure checkout
+                    WhatsApp Order
                   </p>
 
                   <p className="mt-1 text-xs leading-5 text-text/55">
-                    Your information will be used only to process your order
-                    and delivery.
+                    Your customer and delivery details will
+                    be sent to our WhatsApp for order
+                    confirmation.
                   </p>
                 </div>
               </div>

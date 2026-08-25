@@ -1,9 +1,13 @@
 const Category = require("../models/Category");
 
 // GET /api/categories
+// GET /api/categories
+// Public categories — only ACTIVE categories are shown
 const getCategories = async (req, res) => {
   try {
-    const categories = await Category.find().sort({
+    const categories = await Category.find({
+      isActive: true,
+    }).sort({
       title: 1,
     });
 
@@ -24,7 +28,6 @@ const getCategories = async (req, res) => {
     });
   }
 };
-
 // GET /api/categories/:slug
 const getCategoryBySlug = async (req, res) => {
   try {
@@ -238,6 +241,58 @@ const updateCategory = async (req, res) => {
   }
 };
 
+// PATCH /api/categories/:id/status
+const updateCategoryStatus = async (req, res) => {
+  try {
+    const { isActive } = req.body;
+
+    if (typeof isActive !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        message: "isActive must be a boolean",
+      });
+    }
+
+    const category =
+      await Category.findByIdAndUpdate(
+        req.params.id,
+        {
+          isActive,
+        },
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
+
+    if (!category) {
+      return res.status(404).json({
+        success: false,
+        message: "Category not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: isActive
+        ? "Category activated successfully"
+        : "Category muted successfully",
+      category,
+    });
+  } catch (error) {
+    console.error(
+      "Update category status error:",
+      error.message
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        error.message ||
+        "Failed to update category status",
+    });
+  }
+};
 // DELETE /api/categories/:id
 const deleteCategory = async (
   req,
@@ -276,10 +331,38 @@ const deleteCategory = async (
   }
 };
 
+// GET /api/categories/admin/all
+// Admin only — returns ACTIVE and MUTED categories
+const getAllCategoriesAdmin = async (req, res) => {
+  try {
+    const categories = await Category.find().sort({
+      title: 1,
+    });
+
+    return res.status(200).json({
+      success: true,
+      count: categories.length,
+      categories,
+    });
+  } catch (error) {
+    console.error(
+      "Get admin categories error:",
+      error.message
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch admin categories",
+    });
+  }
+};
+
 module.exports = {
   getCategories,
+  getAllCategoriesAdmin,
   getCategoryBySlug,
   createCategory,
   updateCategory,
+  updateCategoryStatus,
   deleteCategory,
 };

@@ -10,12 +10,12 @@ import toast from "react-hot-toast";
 import Container from "../components/ui/Container";
 
 import {
-  getCollections,
+  getAllCollectionsAdmin,
   createCollection,
   updateCollection,
+  updateCollectionStatus,
   deleteCollection,
 } from "../services/collectionService";
-
 import { uploadImage } from "../services/uploadService";
 
 const EMPTY_COLLECTION = {
@@ -58,7 +58,7 @@ const AdminCollections = () => {
     const loadInitialCollections = async () => {
       try {
         const data =
-          await getCollections();
+          await getAllCollectionsAdmin();
 
         if (!cancelled) {
           setCollections(
@@ -96,7 +96,7 @@ const AdminCollections = () => {
       setIsLoading(true);
 
       const data =
-        await getCollections();
+        await getAllCollectionsAdmin();
 
       setCollections(
         data.collections || []
@@ -351,6 +351,35 @@ const AdminCollections = () => {
       setIsSaving(false);
     }
   };
+const handleToggleStatus = async (
+  id,
+  currentStatus
+) => {
+  try {
+    await updateCollectionStatus(
+      id,
+      !currentStatus
+    );
+
+    toast.success(
+      currentStatus
+        ? "Collection muted successfully!"
+        : "Collection unmuted successfully!"
+    );
+
+    await loadCollections();
+  } catch (error) {
+    console.error(
+      "Update collection status error:",
+      error
+    );
+
+    toast.error(
+      error.message ||
+        "Unable to update collection status"
+    );
+  }
+};
 
   const handleDelete = async (
     id
@@ -682,151 +711,136 @@ const AdminCollections = () => {
         )}
 
         {/* Collection List */}
-        <section className="rounded-3xl border border-primary/10 bg-white shadow-sm">
-          <div className="border-b border-primary/10 p-6">
-            <h2 className="font-heading text-xl font-semibold text-primary">
-              Collection List
-            </h2>
+       {/* Collection List */}
+<section className="rounded-3xl border border-primary/10 bg-white shadow-sm">
+  <div className="border-b border-primary/10 p-6">
+    <h2 className="font-heading text-xl font-semibold text-primary">
+      Collection List
+    </h2>
 
-            <p className="mt-1 text-sm text-text/55">
-              {collections.length}{" "}
-              collections
+    <p className="mt-1 text-sm text-text/55">
+      {collections.length} collections
+    </p>
+  </div>
+
+  {isLoading ? (
+    <div className="p-10 text-center text-sm text-text/55">
+      Loading collections...
+    </div>
+  ) : collections.length === 0 ? (
+    <div className="p-10 text-center text-sm text-text/55">
+      No collections found.
+    </div>
+  ) : (
+    <div className="divide-y divide-primary/10">
+      {collections.map((collection) => (
+        <div
+          key={collection._id}
+          className="flex flex-col gap-5 p-6 lg:flex-row lg:items-center lg:justify-between"
+        >
+          {/* Collection Details */}
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="font-semibold text-primary">
+                {collection.title}
+              </h3>
+
+              <span
+                className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${
+                  collection.isActive
+                    ? "bg-green-100 text-green-700"
+                    : "bg-gray-100 text-gray-500"
+                }`}
+              >
+                {collection.isActive ? "Active" : "Muted"}
+              </span>
+            </div>
+
+            <p className="mt-1 text-xs text-text/50">
+              ID: {collection._id}
             </p>
+
+            <div className="mt-3 flex flex-wrap gap-3 text-xs text-text/60">
+              <span>
+                Slug: {collection.slug}
+              </span>
+
+              <span>
+                Category: {collection.category || "—"}
+              </span>
+
+              <span>
+                Order: {collection.sortOrder}
+              </span>
+            </div>
+
+            {collection.description && (
+              <p className="mt-2 max-w-2xl text-sm text-text/60">
+                {collection.description}
+              </p>
+            )}
+
+            {collection.image && (
+              <div className="mt-4">
+                <img
+                  src={collection.image}
+                  alt={collection.title}
+                  className="h-24 w-36 rounded-xl object-cover"
+                />
+              </div>
+            )}
           </div>
 
-          {isLoading ? (
-            <div className="p-10 text-center text-sm text-text/55">
-              Loading collections...
-            </div>
-          ) : collections.length ===
-            0 ? (
-            <div className="p-10 text-center text-sm text-text/55">
-              No collections
-              found.
-            </div>
-          ) : (
-            <div className="divide-y divide-primary/10">
-              {collections.map(
-                (collection) => (
-                  <div
-                    key={
-                      collection._id
-                    }
-                    className="flex flex-col gap-5 p-6 lg:flex-row lg:items-center lg:justify-between"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-semibold text-primary">
-                          {
-                            collection.title
-                          }
-                        </h3>
-
-                        <span
-                          className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${
-                            collection.isActive
-                              ? "bg-green-100 text-green-700"
-                              : "bg-gray-100 text-gray-500"
-                          }`}
-                        >
-                          {collection.isActive
-                            ? "Active"
-                            : "Inactive"}
-                        </span>
-                      </div>
-
-                      <p className="mt-1 text-xs text-text/50">
-                        ID:{" "}
-                        {
-                          collection._id
-                        }
-                      </p>
-
-                      <div className="mt-3 flex flex-wrap gap-3 text-xs text-text/60">
-                        <span>
-                          Slug:{" "}
-                          {
-                            collection.slug
-                          }
-                        </span>
-
-                        <span>
-                          Category:{" "}
-                          {collection.category ||
-                            "—"}
-                        </span>
-
-                        <span>
-                          Order:{" "}
-                          {
-                            collection.sortOrder
-                          }
-                        </span>
-                      </div>
-
-                      {collection.description && (
-                        <p className="mt-2 max-w-2xl text-sm text-text/60">
-                          {
-                            collection.description
-                          }
-                        </p>
-                      )}
-
-                      {collection.image && (
-                        <div className="mt-4">
-                          <img
-                            src={
-                              collection.image
-                            }
-                            alt={
-                              collection.title
-                            }
-                            className="h-24 w-36 rounded-xl object-cover"
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex shrink-0 gap-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          openEditForm(
-                            collection
-                          )
-                        }
-                        className="inline-flex items-center gap-2 rounded-full border border-primary/20 px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/5"
-                      >
-                        <FiEdit2
-                          size={15}
-                        />
-                        Edit
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleDelete(
-                            collection._id
-                          )
-                        }
-                        className="inline-flex items-center gap-2 rounded-full border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
-                      >
-                        <FiTrash2
-                          size={15}
-                        />
-                        Delete
-                      </button>
-                    </div>
-                  </div>
+          {/* Action Buttons */}
+          <div className="flex shrink-0 flex-wrap gap-2">
+            {/* Mute / Unmute */}
+            <button
+              type="button"
+              onClick={() =>
+                handleToggleStatus(
+                  collection._id,
+                  collection.isActive
                 )
-              )}
-            </div>
-          )}
-        </section>
-      </Container>
-    </div>
-  );
+              }
+              className={`inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition ${
+                collection.isActive
+                  ? "border-orange-200 text-orange-600 hover:bg-orange-50"
+                  : "border-green-200 text-green-600 hover:bg-green-50"
+              }`}
+            >
+              {collection.isActive ? "Mute" : "Unmute"}
+            </button>
+
+            {/* Edit */}
+            <button
+              type="button"
+              onClick={() => openEditForm(collection)}
+              className="inline-flex items-center gap-2 rounded-full border border-primary/20 px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/5"
+            >
+              <FiEdit2 size={15} />
+              Edit
+            </button>
+
+            {/* Delete */}
+            <button
+              type="button"
+              onClick={() =>
+                handleDelete(collection._id)
+              }
+              className="inline-flex items-center gap-2 rounded-full border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+            >
+                                     <FiTrash2 size={15} />
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+    </Container>
+  </div>
+);
 };
 
 export default AdminCollections;

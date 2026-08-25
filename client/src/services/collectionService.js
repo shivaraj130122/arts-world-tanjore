@@ -62,6 +62,20 @@ export const getCollectionBySlug =
       response
     );
   };
+export const getAllCollectionsAdmin =
+  async () => {
+    const response =
+      await fetch(
+        `${API_BASE_URL}/collections/admin/all`,
+        {
+          headers: getHeaders(),
+        }
+      );
+
+    return handleResponse(
+      response
+    );
+  };
 
 export const createCollection =
   async (collection) => {
@@ -119,6 +133,28 @@ export const deleteCollection =
           method: "DELETE",
           headers:
             getHeaders(),
+        }
+      );
+
+    return handleResponse(
+      response
+    );
+  };
+// Admin: activate / mute collection
+export const updateCollectionStatus =
+  async (id, isActive) => {
+    const response =
+      await fetch(
+        `${API_BASE_URL}/collections/${encodeURIComponent(
+          id
+        )}/status`,
+        {
+          method: "PATCH",
+          headers:
+            getHeaders(),
+          body: JSON.stringify({
+            isActive,
+          }),
         }
       );
 

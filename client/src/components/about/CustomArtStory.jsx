@@ -12,12 +12,19 @@ const CustomArtStory = () => {
       <Container>
         <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16">
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="aspect-[4/3] w-full rounded-3xl bg-gradient-to-br from-primary/10 via-secondary/15 to-primary/5"
-          />
+  initial={{ opacity: 0, scale: 0.95 }}
+  whileInView={{ opacity: 1, scale: 1 }}
+  viewport={{ once: true, amount: 0.3 }}
+  transition={{ duration: 0.6, ease: "easeOut" }}
+  className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl"
+>
+  <img
+    src="/images/home/custom-art-story.png"
+    alt="Handcrafted Tanjore artwork"
+    className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
+    loading="lazy"
+  />
+</motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}

@@ -3,7 +3,9 @@ const Collection = require("../models/Collection");
 // GET /api/collections
 const getCollections = async (req, res) => {
   try {
-    const collections = await Collection.find().sort({
+    const collections = await Collection.find({
+      isActive: true,
+    }).sort({
       sortOrder: 1,
       title: 1,
     });
@@ -26,6 +28,31 @@ const getCollections = async (req, res) => {
   }
 };
 
+// GET /api/collections/admin/all
+const getAllCollectionsAdmin = async (req, res) => {
+  try {
+    const collections = await Collection.find().sort({
+      sortOrder: 1,
+      title: 1,
+    });
+
+    return res.status(200).json({
+      success: true,
+      count: collections.length,
+      collections,
+    });
+  } catch (error) {
+    console.error(
+      "Get all collections admin error:",
+      error.message
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch all collections",
+    });
+  }
+};
 // GET /api/collections/:slug
 const getCollectionBySlug = async (req, res) => {
   try {
@@ -261,6 +288,59 @@ const updateCollection = async (
   }
 };
 
+// PATCH /api/collections/:id/status
+const updateCollectionStatus = async (req, res) => {
+  try {
+    const { isActive } = req.body;
+
+    if (typeof isActive !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        message: "isActive must be a boolean",
+      });
+    }
+
+    const collection =
+      await Collection.findByIdAndUpdate(
+        req.params.id,
+        {
+          isActive,
+        },
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
+
+    if (!collection) {
+      return res.status(404).json({
+        success: false,
+        message: "Collection not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: isActive
+        ? "Collection activated successfully"
+        : "Collection muted successfully",
+      collection,
+    });
+  } catch (error) {
+    console.error(
+      "Update collection status error:",
+      error.message
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        error.message ||
+        "Failed to update collection status",
+    });
+  }
+};
+
 // DELETE /api/collections/:id
 const deleteCollection = async (
   req,
@@ -301,8 +381,10 @@ const deleteCollection = async (
 
 module.exports = {
   getCollections,
+  getAllCollectionsAdmin,
   getCollectionBySlug,
   createCollection,
   updateCollection,
+  updateCollectionStatus,
   deleteCollection,
 };

@@ -29,7 +29,7 @@ export const FOOTER_CATEGORIES = [
 ];
 
 export const CONTACT_INFO = {
-  phone: "+91 9902067179",
+  phone: "+91 9880556398",
   email: "shiva130122@gmail.com",
   address: {
     line1: "Bukkasagara",
@@ -44,7 +44,7 @@ export const SOCIAL_LINKS = [
   { label: "Instagram", url: "https://instagram.com/tanjore_artby_bhavani", icon: "FaInstagram" },
   { label: "Twitter", url: "https://twitter.com", icon: "FaTwitter" },
   { label: "YouTube", url: "https://youtube.com", icon: "FaYoutube" },
-  { label: "WhatsApp", url: "https://wa.me/919902067179", icon: "FaWhatsapp" },
+  { label: "WhatsApp", url: "https://wa.me/919880556398", icon: "FaWhatsapp" },
 ];
 
 export const SITE_NAME = "Bhavani's Art World";

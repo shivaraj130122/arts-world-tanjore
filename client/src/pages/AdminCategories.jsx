@@ -1,18 +1,23 @@
 import { useEffect, useState } from "react";
+
 import {
   FiEdit2,
   FiPlus,
   FiTrash2,
   FiX,
+  FiVolume2,
+  FiVolumeX,
 } from "react-icons/fi";
+
 import toast from "react-hot-toast";
 
 import Container from "../components/ui/Container";
 
 import {
-  getCategories,
+  getAllCategoriesAdmin,
   createCategory,
   updateCategory,
+  updateCategoryStatus,
   deleteCategory,
 } from "../services/categoryService";
 
@@ -31,20 +36,16 @@ const emptyCategory = {
 const AdminCategories = () => {
   const [categories, setCategories] = useState([]);
 
-  const [isLoading, setIsLoading] =
-    useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [isSaving, setIsSaving] =
-    useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [isUploadingImage, setIsUploadingImage] =
     useState(false);
 
-  const [showForm, setShowForm] =
-    useState(false);
+  const [showForm, setShowForm] = useState(false);
 
-  const [editingId, setEditingId] =
-    useState(null);
+  const [editingId, setEditingId] = useState(null);
 
   const [form, setForm] = useState({
     ...emptyCategory,
@@ -55,12 +56,11 @@ const AdminCategories = () => {
 
     const loadInitialCategories = async () => {
       try {
-        const data = await getCategories();
+        setIsLoading(true);
 
+        const data = await getAllCategoriesAdmin();
         if (!cancelled) {
-          setCategories(
-            data.categories || []
-          );
+          setCategories(data.categories || []);
         }
       } catch (error) {
         if (!cancelled) {
@@ -70,7 +70,7 @@ const AdminCategories = () => {
           );
 
           toast.error(
-            error.message ||
+            error?.message ||
               "Unable to load categories"
           );
         }
@@ -94,9 +94,7 @@ const AdminCategories = () => {
 
       const data = await getCategories();
 
-      setCategories(
-        data.categories || []
-      );
+      setCategories(data.categories || []);
     } catch (error) {
       console.error(
         "Load categories error:",
@@ -104,7 +102,7 @@ const AdminCategories = () => {
       );
 
       toast.error(
-        error.message ||
+        error?.message ||
           "Unable to load categories"
       );
     } finally {
@@ -167,12 +165,62 @@ const AdminCategories = () => {
 
       toast.error(
         error?.response?.data?.message ||
-          error.message ||
+          error?.message ||
           "Unable to upload category image"
       );
     } finally {
       setIsUploadingImage(false);
       event.target.value = "";
+    }
+  };
+
+  const handleToggleCategoryStatus = async (
+    category
+  ) => {
+    const nextStatus =
+      category.isActive === false;
+
+    try {
+      const data =
+        await updateCategoryStatus(
+          category._id,
+          nextStatus
+        );
+
+      if (!data?.success) {
+        throw new Error(
+          data?.message ||
+            "Unable to update category status"
+        );
+      }
+
+      setCategories((current) =>
+        current.map((item) =>
+          item._id === category._id
+            ? {
+                ...item,
+                isActive: nextStatus,
+              }
+            : item
+        )
+      );
+
+      toast.success(
+        nextStatus
+          ? "Category activated successfully"
+          : "Category muted successfully"
+      );
+    } catch (error) {
+      console.error(
+        "Update category status error:",
+        error
+      );
+
+      toast.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Unable to update category status"
+      );
     }
   };
 
@@ -187,9 +235,7 @@ const AdminCategories = () => {
   };
 
   const openEditForm = (category) => {
-    setEditingId(
-      category._id
-    );
+    setEditingId(category._id);
 
     setForm({
       _id: String(
@@ -201,8 +247,7 @@ const AdminCategories = () => {
       ),
 
       description: String(
-        category.description ??
-          ""
+        category.description ?? ""
       ),
 
       slug: String(
@@ -210,16 +255,14 @@ const AdminCategories = () => {
       ),
 
       itemCount:
-        category.itemCount ??
-        0,
+        category.itemCount ?? 0,
 
       image: String(
         category.image ?? ""
       ),
 
       isActive:
-        category.isActive !==
-        false,
+        category.isActive !== false,
     });
 
     setShowForm(true);
@@ -234,6 +277,7 @@ const AdminCategories = () => {
     }
 
     setShowForm(false);
+
     setEditingId(null);
 
     setForm({
@@ -241,9 +285,7 @@ const AdminCategories = () => {
     });
   };
 
-  const handleSubmit = async (
-    event
-  ) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (
@@ -279,11 +321,9 @@ const AdminCategories = () => {
           form.title ?? ""
         ).trim(),
 
-        description:
-          String(
-            form.description ??
-              ""
-          ).trim(),
+        description: String(
+          form.description ?? ""
+        ).trim(),
 
         slug: String(
           form.slug ?? ""
@@ -314,9 +354,7 @@ const AdminCategories = () => {
           "Category updated successfully!"
         );
       } else {
-        await createCategory(
-          payload
-        );
+        await createCategory(payload);
 
         toast.success(
           "Category created successfully!"
@@ -333,7 +371,7 @@ const AdminCategories = () => {
       );
 
       toast.error(
-        error.message ||
+        error?.message ||
           "Unable to save category"
       );
     } finally {
@@ -341,9 +379,7 @@ const AdminCategories = () => {
     }
   };
 
-  const handleDelete = async (
-    id
-  ) => {
+  const handleDelete = async (id) => {
     const confirmed =
       window.confirm(
         "Are you sure you want to delete this category?"
@@ -368,7 +404,7 @@ const AdminCategories = () => {
       );
 
       toast.error(
-        error.message ||
+        error?.message ||
           "Unable to delete category"
       );
     }
@@ -377,6 +413,7 @@ const AdminCategories = () => {
   return (
     <div className="py-10 sm:py-14">
       <Container>
+
         {/* Header */}
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -395,9 +432,7 @@ const AdminCategories = () => {
 
           <button
             type="button"
-            onClick={
-              openCreateForm
-            }
+            onClick={openCreateForm}
             className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-background transition hover:bg-primary-light"
           >
             <FiPlus size={17} />
@@ -417,16 +452,13 @@ const AdminCategories = () => {
                 </h2>
 
                 <p className="mt-1 text-sm text-text/55">
-                  Fields marked with *
-                  are required.
+                  Fields marked with * are required.
                 </p>
               </div>
 
               <button
                 type="button"
-                onClick={
-                  closeForm
-                }
+                onClick={closeForm}
                 disabled={
                   isSaving ||
                   isUploadingImage
@@ -439,12 +471,11 @@ const AdminCategories = () => {
             </div>
 
             <form
-              onSubmit={
-                handleSubmit
-              }
+              onSubmit={handleSubmit}
               className="space-y-6"
             >
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+
                 {/* Category ID */}
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-text">
@@ -453,17 +484,11 @@ const AdminCategories = () => {
 
                   <input
                     name="_id"
-                    value={
-                      form._id
-                    }
-                    onChange={
-                      handleChange
-                    }
-                    disabled={
-                      Boolean(
-                        editingId
-                      )
-                    }
+                    value={form._id}
+                    onChange={handleChange}
+                    disabled={Boolean(
+                      editingId
+                    )}
                     placeholder="tanjore-paintings"
                     className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary disabled:bg-gray-100"
                   />
@@ -477,12 +502,8 @@ const AdminCategories = () => {
 
                   <input
                     name="slug"
-                    value={
-                      form.slug
-                    }
-                    onChange={
-                      handleChange
-                    }
+                    value={form.slug}
+                    onChange={handleChange}
                     placeholder="tanjore-paintings"
                     className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
                   />
@@ -496,12 +517,8 @@ const AdminCategories = () => {
 
                   <input
                     name="title"
-                    value={
-                      form.title
-                    }
-                    onChange={
-                      handleChange
-                    }
+                    value={form.title}
+                    onChange={handleChange}
                     placeholder="Tanjore Paintings"
                     className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
                   />
@@ -517,12 +534,8 @@ const AdminCategories = () => {
                     type="number"
                     min="0"
                     name="itemCount"
-                    value={
-                      form.itemCount
-                    }
-                    onChange={
-                      handleChange
-                    }
+                    value={form.itemCount}
+                    onChange={handleChange}
                     className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
                   />
                 </div>
@@ -536,12 +549,8 @@ const AdminCategories = () => {
 
                 <textarea
                   name="description"
-                  value={
-                    form.description
-                  }
-                  onChange={
-                    handleChange
-                  }
+                  value={form.description}
+                  onChange={handleChange}
                   rows={4}
                   className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
                 />
@@ -557,9 +566,7 @@ const AdminCategories = () => {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={
-                      handleImageUpload
-                    }
+                    onChange={handleImageUpload}
                     disabled={
                       isUploadingImage ||
                       isSaving
@@ -569,17 +576,14 @@ const AdminCategories = () => {
 
                   {isUploadingImage && (
                     <div className="rounded-lg bg-primary/5 px-4 py-3 text-sm text-primary">
-                      Uploading image to
-                      Cloudinary...
+                      Uploading image to Cloudinary...
                     </div>
                   )}
 
                   {form.image && (
                     <div className="overflow-hidden rounded-xl border border-primary/10">
                       <img
-                        src={
-                          form.image
-                        }
+                        src={form.image}
                         alt="Category preview"
                         className="h-48 w-full object-cover"
                       />
@@ -588,12 +592,8 @@ const AdminCategories = () => {
 
                   <input
                     name="image"
-                    value={
-                      form.image
-                    }
-                    onChange={
-                      handleChange
-                    }
+                    value={form.image}
+                    onChange={handleChange}
                     placeholder="Cloudinary image URL"
                     className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
                   />
@@ -605,12 +605,8 @@ const AdminCategories = () => {
                 <input
                   type="checkbox"
                   name="isActive"
-                  checked={
-                    form.isActive
-                  }
-                  onChange={
-                    handleChange
-                  }
+                  checked={form.isActive}
+                  onChange={handleChange}
                 />
 
                 Active Category
@@ -620,9 +616,7 @@ const AdminCategories = () => {
               <div className="flex flex-col gap-3 border-t border-primary/10 pt-6 sm:flex-row sm:justify-end">
                 <button
                   type="button"
-                  onClick={
-                    closeForm
-                  }
+                  onClick={closeForm}
                   disabled={
                     isSaving ||
                     isUploadingImage
@@ -659,8 +653,7 @@ const AdminCategories = () => {
             </h2>
 
             <p className="mt-1 text-sm text-text/55">
-              {categories.length}{" "}
-              categories
+              {categories.length} categories
             </p>
           </div>
 
@@ -668,88 +661,97 @@ const AdminCategories = () => {
             <div className="p-10 text-center text-sm text-text/55">
               Loading categories...
             </div>
-          ) : categories.length ===
-            0 ? (
+          ) : categories.length === 0 ? (
             <div className="p-10 text-center text-sm text-text/55">
-              No categories
-              found.
+              No categories found.
             </div>
           ) : (
             <div className="divide-y divide-primary/10">
               {categories.map(
                 (category) => (
                   <div
-                    key={
-                      category._id
-                    }
+                    key={category._id}
                     className="flex flex-col gap-5 p-6 lg:flex-row lg:items-center lg:justify-between"
                   >
                     <div className="min-w-0 flex-1">
+
                       <div className="flex flex-wrap items-center gap-2">
                         <h3 className="font-semibold text-primary">
-                          {
-                            category.title
-                          }
+                          {category.title}
                         </h3>
 
-                        <span
-                          className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${
-                            category.isActive
-                              ? "bg-green-100 text-green-700"
-                              : "bg-gray-100 text-gray-500"
-                          }`}
-                        >
-                          {category.isActive
-                            ? "Active"
-                            : "Inactive"}
-                        </span>
+                        {/* Status */}
+                        {category.isActive === false ? (
+                          <span className="rounded-full bg-red-100 px-2.5 py-1 text-[10px] font-bold uppercase text-red-700">
+                            Muted
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-bold uppercase text-green-700">
+                            Active
+                          </span>
+                        )}
                       </div>
 
                       <p className="mt-1 text-xs text-text/50">
-                        ID:{" "}
-                        {
-                          category._id
-                        }
+                        ID: {category._id}
                       </p>
 
                       <div className="mt-3 flex flex-wrap gap-3 text-xs text-text/60">
                         <span>
-                          Slug:{" "}
-                          {
-                            category.slug
-                          }
+                          Slug: {category.slug}
                         </span>
 
                         <span>
-                          Items:{" "}
-                          {
-                            category.itemCount
-                          }
+                          Items: {category.itemCount}
                         </span>
                       </div>
 
                       <p className="mt-2 max-w-2xl text-sm text-text/60">
-                        {
-                          category.description
-                        }
+                        {category.description}
                       </p>
 
                       {category.image && (
                         <div className="mt-4">
                           <img
-                            src={
-                              category.image
-                            }
-                            alt={
-                              category.title
-                            }
+                            src={category.image}
+                            alt={category.title}
                             className="h-24 w-36 rounded-xl object-cover"
                           />
                         </div>
                       )}
                     </div>
 
-                    <div className="flex shrink-0 gap-2">
+                    {/* Actions */}
+                    <div className="flex shrink-0 flex-wrap gap-2">
+
+                      {/* Mute / Unmute */}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleToggleCategoryStatus(
+                            category
+                          )
+                        }
+                        className={`inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition ${
+                          category.isActive === false
+                            ? "border-green-200 text-green-700 hover:bg-green-50"
+                            : "border-orange-200 text-orange-600 hover:bg-orange-50"
+                        }`}
+                      >
+                        {category.isActive === false ? (
+                          <>
+                            <FiVolume2 size={15} />
+                            Unmute
+                          </>
+                        ) : (
+                          <>
+                            <FiVolumeX size={15} />
+                            Mute
+                          </>
+                        )}
+                      </button>
+
+                      {/* Edit */}
                       <button
                         type="button"
                         onClick={() =>
@@ -759,12 +761,11 @@ const AdminCategories = () => {
                         }
                         className="inline-flex items-center gap-2 rounded-full border border-primary/20 px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/5"
                       >
-                        <FiEdit2
-                          size={15}
-                        />
+                        <FiEdit2 size={15} />
                         Edit
                       </button>
 
+                      {/* Delete */}
                       <button
                         type="button"
                         onClick={() =>
@@ -774,9 +775,7 @@ const AdminCategories = () => {
                         }
                         className="inline-flex items-center gap-2 rounded-full border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
                       >
-                        <FiTrash2
-                          size={15}
-                        />
+                        <FiTrash2 size={15} />
                         Delete
                       </button>
                     </div>

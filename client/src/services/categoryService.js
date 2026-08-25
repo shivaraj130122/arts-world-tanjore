@@ -2,16 +2,12 @@ const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   "http://localhost:5000/api";
 
-const handleResponse = async (
-  response
-) => {
-  const data =
-    await response.json();
+const handleResponse = async (response) => {
+  const data = await response.json();
 
   if (!response.ok) {
     throw new Error(
-      data.message ||
-        "Something went wrong"
+      data.message || "Something went wrong"
     );
   }
 
@@ -19,106 +15,125 @@ const handleResponse = async (
 };
 
 const getHeaders = () => {
-  const token =
-    localStorage.getItem(
-      "aw_token"
-    );
+  const token = localStorage.getItem("aw_token");
 
   return {
-    "Content-Type":
-      "application/json",
+    "Content-Type": "application/json",
     ...(token
       ? {
-          Authorization:
-            `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         }
       : {}),
   };
 };
 
-export const getCategories =
-  async () => {
-    const response =
-      await fetch(
-        `${API_BASE_URL}/categories`
-      );
+// =====================================================
+// PUBLIC
+// =====================================================
 
-    return handleResponse(
-      response
-    );
-  };
+// Get only ACTIVE categories
+export const getCategories = async () => {
+  const response = await fetch(
+    `${API_BASE_URL}/categories`
+  );
 
-export const getCategoryBySlug =
-  async (slug) => {
-    const response =
-      await fetch(
-        `${API_BASE_URL}/categories/${encodeURIComponent(
-          slug
-        )}`
-      );
+  return handleResponse(response);
+};
 
-    return handleResponse(
-      response
-    );
-  };
+// Get one ACTIVE category
+export const getCategoryBySlug = async (slug) => {
+  const response = await fetch(
+    `${API_BASE_URL}/categories/${encodeURIComponent(
+      slug
+    )}`
+  );
 
-export const createCategory =
-  async (category) => {
-    const response =
-      await fetch(
-        `${API_BASE_URL}/categories`,
-        {
-          method: "POST",
-          headers:
-            getHeaders(),
-          body: JSON.stringify(
-            category
-          ),
-        }
-      );
+  return handleResponse(response);
+};
 
-    return handleResponse(
-      response
-    );
-  };
+// =====================================================
+// ADMIN
+// =====================================================
 
-export const updateCategory =
-  async (id, category) => {
-    const response =
-      await fetch(
-        `${API_BASE_URL}/categories/${encodeURIComponent(
-          id
-        )}`,
-        {
-          method: "PUT",
-          headers:
-            getHeaders(),
-          body: JSON.stringify(
-            category
-          ),
-        }
-      );
+// Get ALL categories
+// Includes ACTIVE + MUTED
+export const getAllCategoriesAdmin = async () => {
+  const response = await fetch(
+    `${API_BASE_URL}/categories/admin/all`,
+    {
+      method: "GET",
+      headers: getHeaders(),
+    }
+  );
 
-    return handleResponse(
-      response
-    );
-  };
+  return handleResponse(response);
+};
 
-export const deleteCategory =
-  async (id) => {
-    const response =
-      await fetch(
-        `${API_BASE_URL}/categories/${encodeURIComponent(
-          id
-        )}`,
-        {
-          method: "DELETE",
-          headers:
-            getHeaders(),
-        }
-      );
+// Create category
+export const createCategory = async (category) => {
+  const response = await fetch(
+    `${API_BASE_URL}/categories`,
+    {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(category),
+    }
+  );
 
-    return handleResponse(
-      response
-    );
-  };
+  return handleResponse(response);
+};
+
+// Update category
+export const updateCategory = async (
+  id,
+  category
+) => {
+  const response = await fetch(
+    `${API_BASE_URL}/categories/${encodeURIComponent(
+      id
+    )}`,
+    {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify(category),
+    }
+  );
+
+  return handleResponse(response);
+};
+
+// Mute / Unmute category
+export const updateCategoryStatus = async (
+  id,
+  isActive
+) => {
+  const response = await fetch(
+    `${API_BASE_URL}/categories/${encodeURIComponent(
+      id
+    )}/status`,
+    {
+      method: "PATCH",
+      headers: getHeaders(),
+      body: JSON.stringify({
+        isActive,
+      }),
+    }
+  );
+
+  return handleResponse(response);
+};
+
+// Delete category
+export const deleteCategory = async (id) => {
+  const response = await fetch(
+    `${API_BASE_URL}/categories/${encodeURIComponent(
+      id
+    )}`,
+    {
+      method: "DELETE",
+      headers: getHeaders(),
+    }
+  );
+
+  return handleResponse(response);
+};

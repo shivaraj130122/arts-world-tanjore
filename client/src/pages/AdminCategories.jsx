@@ -556,46 +556,89 @@ const AdminCategories = () => {
                 />
               </div>
 
-              {/* Category Image Upload */}
+              {/* Category Image */}
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-text">
-                  Category Image
-                </label>
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <label className="block text-sm font-medium text-text">
+                    Category Image
+                  </label>
+                  <span className="text-xs text-text/45">
+                    JPG, PNG or WEBP
+                  </span>
+                </div>
 
-                <div className="space-y-3">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    disabled={
-                      isUploadingImage ||
-                      isSaving
-                    }
-                    className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary disabled:cursor-not-allowed disabled:opacity-60"
-                  />
+                <div className="overflow-hidden rounded-2xl border border-primary/15 bg-background">
+                  {form.image ? (
+                    <div className="relative">
+                      <div className="aspect-[16/7] w-full overflow-hidden bg-primary/5">
+                        <img
+                          src={form.image}
+                          alt="Category preview"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
 
-                  {isUploadingImage && (
-                    <div className="rounded-lg bg-primary/5 px-4 py-3 text-sm text-primary">
-                      Uploading image to Cloudinary...
+                      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-primary/10 bg-white p-4">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-primary">
+                            Image ready
+                          </p>
+                          <p className="mt-0.5 max-w-xl truncate text-xs text-text/45">
+                            {form.image}
+                          </p>
+                        </div>
+
+                        <label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-primary/20 px-4 py-2 text-xs font-semibold text-primary transition hover:bg-primary/5">
+                          {isUploadingImage ? "Uploading..." : "Replace Image"}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            disabled={isUploadingImage || isSaving}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
                     </div>
-                  )}
-
-                  {form.image && (
-                    <div className="overflow-hidden rounded-xl border border-primary/10">
-                      <img
-                        src={form.image}
-                        alt="Category preview"
-                        className="h-48 w-full object-cover"
+                  ) : (
+                    <label className="flex min-h-48 cursor-pointer flex-col items-center justify-center px-6 py-8 text-center transition hover:bg-primary/5">
+                      <div className="mb-3 grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary">
+                        <FiPlus size={20} />
+                      </div>
+                      <p className="text-sm font-semibold text-primary">
+                        {isUploadingImage ? "Uploading image..." : "Upload category image"}
+                      </p>
+                      <p className="mt-1 text-xs text-text/50">
+                        Click to choose an image from your computer
+                      </p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        disabled={isUploadingImage || isSaving}
+                        className="hidden"
                       />
-                    </div>
+                    </label>
                   )}
+                </div>
 
+                {isUploadingImage && (
+                  <div className="mt-3 flex items-center gap-2 rounded-xl bg-primary/5 px-4 py-3 text-xs font-medium text-primary">
+                    <span className="h-2 w-2 animate-pulse rounded-full bg-current" />
+                    Uploading image to Cloudinary...
+                  </div>
+                )}
+
+                <div className="mt-3">
+                  <label className="mb-1.5 block text-xs font-medium text-text/60">
+                    Or use an existing image URL
+                  </label>
                   <input
                     name="image"
                     value={form.image}
                     onChange={handleChange}
-                    placeholder="Cloudinary image URL"
-                    className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
+                    placeholder="https://..."
+                    className="w-full rounded-lg border border-primary/20 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-primary"
                   />
                 </div>
               </div>

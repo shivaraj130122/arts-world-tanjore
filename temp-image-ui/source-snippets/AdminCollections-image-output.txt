@@ -1,0 +1,639 @@
+ C:\artbybhavani\arts-world-tanjore> Get-Content .\client\src\pages\AdminCategories.jsx | Select-String -Pattern "Image|image|Upload|upload" -Context 5,12
+
+
+    updateCategory,
+    updateCategoryStatus,
+    deleteCategory,
+  } from "../services/categoryService";
+  
+> import { uploadImage } from 
+"../services/uploadService";
+  
+  const emptyCategory = {
+    _id: "",
+    title: "",
+    description: "",
+    slug: "",
+    itemCount: 0,
+>   image: "",
+    isActive: true,
+  };
+  
+  const AdminCategories = () => {
+    const [categories, setCategories] = 
+useState([]);
+  
+    const [isLoading, setIsLoading] = 
+useState(true);
+  
+    const [isSaving, setIsSaving] = 
+useState(false);
+  
+>   const [isUploadingImage, setIsUploadingImage] =
+      useState(false);
+  
+    const [showForm, setShowForm] = 
+useState(false);
+  
+    const [editingId, setEditingId] = 
+useState(null);
+  
+    const [form, setForm] = useState({
+      ...emptyCategory,
+    });
+  
+    useEffect(() => {
+      let cancelled = false;
+            ? checked
+            : value,
+      }));
+    };
+  
+>   const handleImageUpload = async (event) => {
+      const file = event.target.files?.[0];
+  
+      if (!file) {
+        return;
+      }
+  
+      try {
+>       setIsUploadingImage(true);
+  
+>       const data = await uploadImage(file);
+  
+        if (
+          !data?.success ||
+>         !data?.image?.url
+        ) {
+          throw new Error(
+            data?.message ||
+>             "Image upload failed"
+          );
+        }
+  
+        setForm((current) => ({
+          ...current,
+>         image: data.image.url,
+        }));
+  
+        toast.success(
+>         "Category image uploaded successfully"
+        );
+      } catch (error) {
+        console.error(
+>         "Category image upload error:",
+          error
+        );
+  
+        toast.error(
+          error?.response?.data?.message ||
+            error?.message ||
+>           "Unable to upload category image"
+        );
+      } finally {
+>       setIsUploadingImage(false);
+        event.target.value = "";
+      }
+    };
+  
+    const handleToggleCategoryStatus = async (
+      category
+    ) => {
+      const nextStatus =
+        category.isActive === false;
+  
+      try {
+        const data =
+        ),
+  
+        itemCount:
+          category.itemCount ?? 0,
+  
+>       image: String(
+>         category.image ?? ""
+        ),
+  
+        isActive:
+          category.isActive !== false,
+      });
+  
+      setShowForm(true);
+    };
+  
+    const closeForm = () => {
+      if (
+        isSaving ||
+>       isUploadingImage
+      ) {
+        return;
+      }
+  
+      setShowForm(false);
+  
+      setEditingId(null);
+  
+      setForm({
+        ...emptyCategory,
+      });
+    };
+  
+          itemCount: Number(
+            form.itemCount ?? 0
+          ),
+  
+>         image: String(
+>           form.image ?? ""
+          ).trim(),
+  
+          isActive: Boolean(
+            form.isActive
+          ),
+        };
+  
+        if (editingId) {
+          await updateCategory(
+            editingId,
+            payload
+          );
+                <button
+                  type="button"
+                  onClick={closeForm}
+                  disabled={
+                    isSaving ||
+>                   isUploadingImage
+                  }
+                  className="grid h-10 w-10 
+place-items-center rounded-full text-text/60 
+transition hover:bg-primary/10 hover:text-primary 
+disabled:opacity-50"
+                  aria-label="Close form"
+                >
+                  <FiX size={20} />
+                </button>
+              </div>
+  
+              <form
+                onSubmit={handleSubmit}
+                className="space-y-6"
+              >
+                    rows={4}
+                    className="w-full rounded-lg 
+border border-primary/20 px-4 py-2.5 text-sm 
+outline-none focus:border-primary"
+                  />
+                </div>
+  
+>               {/* Category Image Upload */}
+                <div>
+                  <label className="mb-1.5 block 
+text-sm font-medium text-text">
+>                   Category Image
+                  </label>
+  
+                  <div className="space-y-3">
+                    <input
+                      type="file"
+>                     accept="image/*"
+>                     onChange={handleImageUpload}
+                      disabled={
+>                       isUploadingImage ||
+                        isSaving
+                      }
+                      className="w-full rounded-lg 
+border border-primary/20 px-4 py-2.5 text-sm 
+outline-none focus:border-primary 
+disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+  
+>                   {isUploadingImage && (
+                      <div className="rounded-lg 
+bg-primary/5 px-4 py-3 text-sm text-primary">
+>                       Uploading image to 
+Cloudinary...
+                      </div>
+                    )}
+  
+>                   {form.image && (
+                      <div 
+className="overflow-hidden rounded-xl border 
+border-primary/10">
+                        <img
+>                         src={form.image}
+                          alt="Category preview"
+                          className="h-48 w-full 
+object-cover"
+                        />
+                      </div>
+                    )}
+  
+                    <input
+>                     name="image"
+>                     value={form.image}
+                      onChange={handleChange}
+>                     placeholder="Cloudinary 
+image URL"
+                      className="w-full rounded-lg 
+border border-primary/20 px-4 py-2.5 text-sm 
+outline-none focus:border-primary"
+                    />
+                  </div>
+                </div>
+  
+                {/* Active */}
+                <label className="flex 
+items-center gap-2 text-sm text-text">
+                  <input
+                    type="checkbox"
+                    name="isActive"
+                    checked={form.isActive}
+                    onChange={handleChange}
+                  <button
+                    type="button"
+                    onClick={closeForm}
+                    disabled={
+                      isSaving ||
+>                     isUploadingImage
+                    }
+                    className="rounded-full border 
+border-primary/20 px-6 py-3 text-sm font-semibold 
+text-primary transition hover:bg-primary/5 
+disabled:opacity-60"
+                  >
+                    Cancel
+                  </button>
+  
+                  <button
+                    type="submit"
+                    disabled={
+                      isSaving ||
+>                     isUploadingImage
+                    }
+                    className="rounded-full 
+bg-primary px-6 py-3 text-sm font-semibold 
+text-background transition hover:bg-primary-light 
+disabled:opacity-60"
+                  >
+                    {isSaving
+                      ? "Saving..."
+                      : editingId
+                        ? "Update Category"
+                        : "Create Category"}
+                  </button>
+                </div>
+              </form>
+            </section>
+  
+                        <p className="mt-2 
+max-w-2xl text-sm text-text/60">
+                          {category.description}
+                        </p>
+  
+>                       {category.image && (
+                          <div className="mt-4">
+                            <img
+>                             src={category.image}
+                              alt={category.title}
+                              className="h-24 w-36 
+rounded-xl object-cover"
+                            />
+                          </div>
+                        )}
+                      </div>
+  
+                      {/* Actions */}
+                      <div className="flex 
+shrink-0 flex-wrap gap-2">
+  
+                        {/* Mute / Unmute */}
+                        <button
+
+
+PS C:\artbybhavani\arts-world-tanjore> Get-Content .\client\src\pages\AdminCollections.jsx | Select-String -Pattern "Image|image|Upload|upload" -Context 5,12
+
+    createCollection,
+    updateCollection,
+    updateCollectionStatus,
+    deleteCollection,
+  } from "../services/collectionService";
+> import { uploadImage } from 
+"../services/uploadService";
+  import { getAllCategoriesAdmin } from 
+"../services/categoryService";
+  
+  const EMPTY_COLLECTION = {
+    _id: "",
+    title: "",
+    description: "",
+    slug: "",
+>   image: "",
+    category: "",
+    isActive: true,
+    sortOrder: 0,
+  };
+  
+  const AdminCollections = () => {
+    const [collections, setCollections] =
+      useState([]);
+  
+    const [categories, setCategories] =
+      useState([]);
+  
+      useState(true);
+  
+    const [isSaving, setIsSaving] =
+      useState(false);
+  
+>   const [isUploadingImage, setIsUploadingImage] =
+      useState(false);
+  
+    const [showForm, setShowForm] =
+      useState(false);
+  
+    const [editingId, setEditingId] =
+      useState(null);
+  
+    const [form, setForm] = useState({
+      ...EMPTY_COLLECTION,
+    });
+  
+            ? checked
+            : value,
+      }));
+    };
+  
+>   const handleImageUpload = async (event) => {
+      const file =
+        event.target.files?.[0];
+  
+      if (!file) {
+        return;
+      }
+  
+      try {
+>       setIsUploadingImage(true);
+  
+        const data =
+>         await uploadImage(file);
+  
+        if (
+          !data?.success ||
+>         !data?.image?.url
+        ) {
+          throw new Error(
+            data?.message ||
+>             "Image upload failed"
+          );
+        }
+  
+        setForm((current) => ({
+          ...current,
+>         image: data.image.url,
+        }));
+  
+        toast.success(
+>         "Collection image uploaded successfully"
+        );
+      } catch (error) {
+        console.error(
+>         "Collection image upload error:",
+          error
+        );
+  
+        toast.error(
+          error?.response?.data?.message ||
+            error.message ||
+>           "Unable to upload collection image"
+        );
+      } finally {
+>       setIsUploadingImage(false);
+  
+        event.target.value = "";
+      }
+    };
+  
+    const openCreateForm = () => {
+      setEditingId(null);
+  
+      setForm({
+        ...EMPTY_COLLECTION,
+      });
+  
+  
+        slug: String(
+          collection.slug ?? ""
+        ),
+  
+>       image: String(
+>         collection.image ?? ""
+        ),
+  
+        category: (() => {
+          const currentCategory = String(
+            collection.category ?? ""
+          ).trim();
+  
+          const matchedCategory = categories.find(
+            (category) =>
+              category.slug === currentCategory ||
+              category.title === currentCategory ||
+              category._id === currentCategory
+    };
+  
+    const closeForm = () => {
+      if (
+        isSaving ||
+>       isUploadingImage
+      ) {
+        return;
+      }
+  
+      setShowForm(false);
+  
+      setEditingId(null);
+  
+      setForm({
+        ...EMPTY_COLLECTION,
+      });
+    };
+            form.slug ?? ""
+          )
+            .trim()
+            .toLowerCase(),
+  
+>         image: String(
+>           form.image ?? ""
+          ).trim(),
+  
+          category: String(
+            form.category ?? ""
+          ).trim(),
+  
+          isActive: Boolean(
+            form.isActive
+          ),
+  
+          sortOrder: Number(
+            form.sortOrder ?? 0
+                  onClick={
+                    closeForm
+                  }
+                  disabled={
+                    isSaving ||
+>                   isUploadingImage
+                  }
+                  className="grid h-10 w-10 
+place-items-center rounded-full text-text/60 
+transition hover:bg-primary/10 hover:text-primary 
+disabled:opacity-50"
+                  aria-label="Close form"
+                >
+                  <FiX size={20} />
+                </button>
+              </div>
+  
+              <form
+                onSubmit={
+                  handleSubmit
+                }
+                      }
+                      className="w-full rounded-lg 
+border border-primary/20 px-4 py-2.5 text-sm 
+outline-none focus:border-primary"
+                    />
+                  </div>
+  
+>                 {/* Collection Image */}
+                  <div>
+                    <label className="mb-1.5 block 
+text-sm font-medium text-text">
+>                     Collection Image
+                    </label>
+  
+                    <div className="space-y-3">
+                      <input
+                        type="file"
+>                       accept="image/*"
+                        onChange={
+>                         handleImageUpload
+                        }
+                        disabled={
+>                         isUploadingImage ||
+                          isSaving
+                        }
+                        className="w-full 
+rounded-lg border border-primary/20 px-4 py-2.5 
+text-sm outline-none focus:border-primary 
+disabled:cursor-not-allowed disabled:opacity-60"
+                      />
+  
+>                     {isUploadingImage && (
+                        <div className="rounded-lg 
+bg-primary/5 px-4 py-3 text-sm text-primary">
+>                         Uploading image to
+                          Cloudinary...
+                        </div>
+                      )}
+  
+>                     {form.image && (
+                        <div 
+className="overflow-hidden rounded-xl border 
+border-primary/10">
+                          <img
+                            src={
+>                             form.image
+                            }
+                            alt="Collection 
+preview"
+                            className="h-48 w-full 
+object-cover"
+                          />
+                        </div>
+                      )}
+  
+                      <input
+>                       name="image"
+                        value={
+>                         form.image
+                        }
+                        onChange={
+                          handleChange
+                        }
+>                       placeholder="Cloudinary 
+image URL"
+                        className="w-full 
+rounded-lg border border-primary/20 px-4 py-2.5 
+text-sm outline-none focus:border-primary"
+                      />
+                    </div>
+                  </div>
+                </div>
+  
+                {/* Description */}
+                <div>
+                  <label className="mb-1.5 block 
+text-sm font-medium text-text">
+                    Description
+                  </label>
+  
+                    onClick={
+                      closeForm
+                    }
+                    disabled={
+                      isSaving ||
+>                     isUploadingImage
+                    }
+                    className="rounded-full border 
+border-primary/20 px-6 py-3 text-sm font-semibold 
+text-primary transition hover:bg-primary/5 
+disabled:opacity-60"
+                  >
+                    Cancel
+                  </button>
+  
+                  <button
+                    type="submit"
+                    disabled={
+                      isSaving ||
+>                     isUploadingImage
+                    }
+                    className="rounded-full 
+bg-primary px-6 py-3 text-sm font-semibold 
+text-background transition hover:bg-primary-light 
+disabled:opacity-60"
+                  >
+                    {isSaving
+                      ? "Saving..."
+                      : editingId
+                        ? "Update Collection"
+                        : "Create Collection"}
+                  </button>
+                </div>
+              </form>
+            </section>
+                <p className="mt-2 max-w-2xl 
+text-sm text-text/60">
+                  {collection.description}
+                </p>
+              )}
+  
+>             {collection.image && (
+                <div className="mt-4">
+                  <img
+>                   src={collection.image}
+                    alt={collection.title}
+                    className="h-24 w-36 
+rounded-xl object-cover"
+                  />
+                </div>
+              )}
+            </div>
+  
+            {/* Action Buttons */}
+            <div className="flex shrink-0 
+flex-wrap gap-2">
+              {/* Mute / Unmute */}
+              <button
+                type="button"
+
+
+PS C:\artbybhavani\arts-world-tanjore> 

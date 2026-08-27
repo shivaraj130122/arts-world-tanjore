@@ -39,8 +39,12 @@ const CategoryCard = ({
       }}
       className="group relative overflow-hidden rounded-3xl border border-primary/10 bg-background"
     >
-      {/* Category Image */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-gradient-to-br from-primary/10 via-secondary/10 to-primary/5">
+      {/* Category Image — whole image is clickable */}
+      <Link
+        to={`/shop?category=${encodeURIComponent(slug || "")}`}
+        aria-label={`View ${title || "category"}`}
+        className="block relative aspect-[4/3] w-full overflow-hidden bg-gradient-to-br from-primary/10 via-secondary/10 to-primary/5"
+      >
         {image ? (
           <img
             src={image}
@@ -57,7 +61,7 @@ const CategoryCard = ({
 
         {/* Bottom Gradient */}
         <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-primary/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-      </div>
+      </Link>
 
       {/* Category Information */}
       <div className="p-6">

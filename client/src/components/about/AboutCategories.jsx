@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import Container from "../ui/Container";
 import SectionTitle from "../ui/SectionTitle";
@@ -7,6 +8,7 @@ import CategoryCard from "../ui/CategoryCard";
 import { getCategories } from "../../services/categoryService";
 
 const AboutCategories = () => {
+  const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -95,13 +97,45 @@ const AboutCategories = () => {
         {/* Categories */}
         {!isLoading && !error && categories.length > 0 && (
           <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {categories.map((category, index) => (
-              <CategoryCard
-                key={category._id || category.id}
-                category={category}
-                index={index}
-              />
-            ))}
+            {categories.map((category, index) => {
+              const categorySlug =
+                category.slug || category.id || category._id;
+
+              const openCategory = () => {
+                if (!categorySlug) return;
+
+                navigate(
+                  `/shop?category=${encodeURIComponent(
+                    categorySlug
+                  )}`
+                );
+              };
+
+              return (
+                <div
+                  key={category._id || category.id}
+                  role="link"
+                  tabIndex={0}
+                  onClick={openCategory}
+                  onKeyDown={(event) => {
+                    if (
+                      event.key === "Enter" ||
+                      event.key === " "
+                    ) {
+                      event.preventDefault();
+                      openCategory();
+                    }
+                  }}
+                  className="cursor-pointer rounded-3xl outline-none transition focus-visible:ring-2 focus-visible:ring-primary/40"
+                  aria-label={`Explore ${category.title || "category"}`}
+                >
+                  <CategoryCard
+                    category={category}
+                    index={index}
+                  />
+                </div>
+              );
+            })}
           </div>
         )}
 

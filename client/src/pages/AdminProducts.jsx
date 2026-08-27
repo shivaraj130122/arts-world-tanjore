@@ -1110,152 +1110,170 @@ const AdminProducts = () => {
 
                 {/* Main Image */}
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-text">
-                    Main Product Image
-                  </label>
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <label className="block text-sm font-medium text-text">
+                      Main Product Image
+                    </label>
+                    <span className="text-xs text-text/45">
+                      JPG, PNG or WEBP • Max 10 MB
+                    </span>
+                  </div>
 
-                  <div className="rounded-2xl border border-primary/15 bg-background p-4">
-
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                      <label className="inline-flex cursor-pointer items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-background transition hover:bg-primary-light">
-                        {isUploadingMainImage
-                          ? "Uploading..."
-                          : "Upload Main Image"}
-
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={
-                            handleMainImageUpload
-                          }
-                          disabled={
-                            isUploadingMainImage
-                          }
-                          className="hidden"
-                        />
-                      </label>
-
-                      <span className="text-xs text-text/50">
-                        JPG, PNG, WEBP • Maximum 10 MB
-                      </span>
-                    </div>
-
-                    {form.image && (
-                      <div className="mt-4">
-                        <p className="mb-2 text-xs font-medium text-text/60">
-                          Main image preview
-                        </p>
-
-                        <div className="relative h-40 w-40 overflow-hidden rounded-xl border border-primary/10 bg-white">
+                  <div className="overflow-hidden rounded-2xl border border-primary/15 bg-background">
+                    {form.image ? (
+                      <div>
+                        <div className="aspect-[16/9] w-full overflow-hidden bg-primary/5">
                           <img
-                            src={
-                              form.image
-                            }
+                            src={form.image}
                             alt="Main product preview"
                             className="h-full w-full object-cover"
                           />
                         </div>
+
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-primary/10 bg-white p-4">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-primary">
+                              Main image ready
+                            </p>
+                            <p className="mt-0.5 max-w-xl truncate text-xs text-text/45">
+                              {form.image}
+                            </p>
+                          </div>
+
+                          <label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-primary/20 px-4 py-2 text-xs font-semibold text-primary transition hover:bg-primary/5">
+                            {isUploadingMainImage ? "Uploading..." : "Replace Image"}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleMainImageUpload}
+                              disabled={isUploadingMainImage || isSaving}
+                              className="hidden"
+                            />
+                          </label>
+                        </div>
                       </div>
-                    )}
-
-                    <div className="mt-4">
-                      <label className="mb-1.5 block text-xs font-medium text-text/60">
-                        Or use an existing image URL
+                    ) : (
+                      <label className="flex min-h-56 cursor-pointer flex-col items-center justify-center px-6 py-8 text-center transition hover:bg-primary/5">
+                        <div className="mb-3 grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary">
+                          <FiPlus size={20} />
+                        </div>
+                        <p className="text-sm font-semibold text-primary">
+                          {isUploadingMainImage ? "Uploading image..." : "Upload main product image"}
+                        </p>
+                        <p className="mt-1 text-xs text-text/50">
+                          Click to choose the primary artwork image
+                        </p>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleMainImageUpload}
+                          disabled={isUploadingMainImage || isSaving}
+                          className="hidden"
+                        />
                       </label>
+                    )}
+                  </div>
 
-                      <input
-                        name="image"
-                        value={
-                          form.image
-                        }
-                        onChange={
-                          handleChange
-                        }
-                        placeholder="https://..."
-                        className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
-                      />
+                  {isUploadingMainImage && (
+                    <div className="mt-3 flex items-center gap-2 rounded-xl bg-primary/5 px-4 py-3 text-xs font-medium text-primary">
+                      <span className="h-2 w-2 animate-pulse rounded-full bg-current" />
+                      Uploading main image to Cloudinary...
                     </div>
+                  )}
+
+                  <div className="mt-3">
+                    <label className="mb-1.5 block text-xs font-medium text-text/60">
+                      Or use an existing image URL
+                    </label>
+                    <input
+                      name="image"
+                      value={form.image}
+                      onChange={handleChange}
+                      placeholder="https://..."
+                      className="w-full rounded-lg border border-primary/20 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-primary"
+                    />
                   </div>
                 </div>
 
                 {/* Additional Images */}
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-text">
-                    Additional Product Images
-                  </label>
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <label className="block text-sm font-medium text-text">
+                      Additional Product Images
+                    </label>
+                    <span className="text-xs text-text/45">
+                      Multiple images supported
+                    </span>
+                  </div>
 
-                  <div className="rounded-2xl border border-primary/15 bg-background p-4">
-
-                    <label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-primary/20 px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5">
-                      {isUploadingAdditionalImages
-                        ? "Uploading..."
-                        : "Upload Multiple Images"}
-
+                  <div className="overflow-hidden rounded-2xl border border-primary/15 bg-background p-4">
+                    <label className="flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-primary/20 bg-white px-6 py-6 text-center transition hover:border-primary/40 hover:bg-primary/5">
+                      <div className="mb-2 grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary">
+                        <FiPlus size={18} />
+                      </div>
+                      <p className="text-sm font-semibold text-primary">
+                        {isUploadingAdditionalImages
+                          ? "Uploading images..."
+                          : "Add product images"}
+                      </p>
+                      <p className="mt-1 text-xs text-text/50">
+                        Select multiple artwork photos at once
+                      </p>
                       <input
                         type="file"
                         accept="image/*"
                         multiple
-                        onChange={
-                          handleAdditionalImagesUpload
-                        }
-                        disabled={
-                          isUploadingAdditionalImages
-                        }
+                        onChange={handleAdditionalImagesUpload}
+                        disabled={isUploadingAdditionalImages || isSaving}
                         className="hidden"
                       />
                     </label>
 
-                    <p className="mt-2 text-xs text-text/50">
-                      Select multiple images at once.
-                    </p>
+                    {isUploadingAdditionalImages && (
+                      <div className="mt-3 flex items-center gap-2 rounded-xl bg-primary/5 px-4 py-3 text-xs font-medium text-primary">
+                        <span className="h-2 w-2 animate-pulse rounded-full bg-current" />
+                        Uploading additional images to Cloudinary...
+                      </div>
+                    )}
 
-                    {String(
-                      form.images || ""
-                    ).trim() && (
+                    {String(form.images || "").trim() && (
                       <div className="mt-5">
-
-                        <p className="mb-3 text-xs font-medium text-text/60">
-                          Additional image previews
-                        </p>
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-text/60">
+                            Image previews
+                          </p>
+                          <span className="text-xs text-text/40">
+                            {String(form.images || "")
+                              .split("\n")
+                              .filter((url) => url.trim()).length}{" "}
+                            image(s)
+                          </span>
+                        </div>
 
                         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                          {String(
-                            form.images || ""
-                          )
+                          {String(form.images || "")
                             .split("\n")
-                            .map(
-                              (
-                                url
-                              ) =>
-                                url.trim()
-                            )
-                            .filter(
-                              Boolean
-                            )
-                            .map(
-                              (
-                                url,
-                                index
-                              ) => (
-                                <div
-                                  key={`${url}-${index}`}
-                                  className="overflow-hidden rounded-xl border border-primary/10 bg-white"
-                                >
-                                  <div className="aspect-square">
-                                    <img
-                                      src={
-                                        url
-                                      }
-                                      alt={`Additional product ${
-                                        index +
-                                        1
-                                      }`}
-                                      className="h-full w-full object-cover"
-                                    />
-                                  </div>
+                            .map((url) => url.trim())
+                            .filter(Boolean)
+                            .map((url, index) => (
+                              <div
+                                key={`${url}-${index}`}
+                                className="group overflow-hidden rounded-xl border border-primary/10 bg-white"
+                              >
+                                <div className="aspect-square overflow-hidden bg-primary/5">
+                                  <img
+                                    src={url}
+                                    alt={`Additional product ${index + 1}`}
+                                    className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                                  />
                                 </div>
-                              )
-                            )}
+                                <div className="border-t border-primary/10 px-2.5 py-2">
+                                  <p className="truncate text-[11px] text-text/50">
+                                    Image {index + 1}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
                         </div>
                       </div>
                     )}
@@ -1264,18 +1282,13 @@ const AdminProducts = () => {
                       <label className="mb-1.5 block text-xs font-medium text-text/60">
                         Or use existing image URLs
                       </label>
-
                       <textarea
                         name="images"
-                        value={
-                          form.images
-                        }
-                        onChange={
-                          handleChange
-                        }
+                        value={form.images}
+                        onChange={handleChange}
                         rows={3}
                         placeholder="One URL per line"
-                        className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
+                        className="w-full rounded-lg border border-primary/20 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-primary"
                       />
                     </div>
                   </div>

@@ -12,6 +12,7 @@ const MobileFilterDrawer = ({
   onChange,
   onClear,
   onApply,
+  categories = [],
 }) => {
   return (
     <AnimatePresence>
@@ -65,7 +66,12 @@ const MobileFilterDrawer = ({
               </select>
             </div>
 
-            <ShopFilters filters={filters} onChange={onChange} onClear={onClear} />
+            <ShopFilters
+              filters={filters}
+              onChange={onChange}
+              onClear={onClear}
+              categories={categories}
+            />
 
             <button
               type="button"

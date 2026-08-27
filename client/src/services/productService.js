@@ -1,72 +1,189 @@
-import api from "./api";
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:5000/api";
 
-export const getProducts = async () => {
-  const { data } = await api.get("/products");
-  return data;
-};
-
-// Admin: get all products including muted products
-export const getAdminProducts = async () => {
-  const { data } = await api.get("/products/admin/all");
-  return data;
-};
-export const getProductById = async (id) => {
-  const { data } = await api.get(`/products/${id}`);
-  return data;
-};
-
-export const getProductsByCategory = async (category) => {
-  const { data } = await api.get("/products", {
-    params: {
-      category,
-    },
-  });
-
-  return data;
-};
-
-// Admin: create product
-export const createProduct = async (productData) => {
-  const { data } = await api.post(
-    "/products",
-    productData
-  );
-
-  return data;
-};
-
-// Admin: update product
-export const updateProduct = async (
-  id,
-  productData
+const handleResponse = async (
+  response
 ) => {
-  const { data } = await api.put(
-    `/products/${id}`,
-    productData
-  );
+  const data =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+        "Something went wrong"
+    );
+  }
 
   return data;
 };
 
-// Admin: delete product
-export const deleteProduct = async (id) => {
-  const { data } = await api.delete(
-    `/products/${id}`
-  );
+const getHeaders = () => {
+  const token =
+    localStorage.getItem("aw_token");
 
-  return data;
-};
-// Admin: activate / mute product
-export const updateProductStatus = async (
-  id,
-  isActive
-) => {
-  const { data } = await api.patch(
-    `/products/${id}/status`,
-    {
-      isActive,
-    }
-  );
+  return {
+    "Content-Type":
+      "application/json",
 
-  return data;
+    ...(token
+      ? {
+          Authorization:
+            `Bearer ${token}`,
+        }
+      : {}),
+  };
 };
+
+// Public
+export const getProducts =
+  async (params = {}) => {
+    const search =
+      new URLSearchParams();
+
+    Object.entries(params).forEach(
+      ([key, value]) => {
+        if (
+          value !== undefined &&
+          value !== null &&
+          value !== ""
+        ) {
+          search.set(
+            key,
+            value
+          );
+        }
+      }
+    );
+
+    const query =
+      search.toString();
+
+    const response =
+      await fetch(
+        `${API_BASE_URL}/products${
+          query
+            ? `?${query}`
+            : ""
+        }`
+      );
+
+    return handleResponse(
+      response
+    );
+  };
+
+// Admin
+export const getAdminProducts =
+  async () => {
+    const response =
+      await fetch(
+        `${API_BASE_URL}/products/admin/all`,
+        {
+          headers: getHeaders(),
+        }
+      );
+
+    return handleResponse(
+      response
+    );
+  };
+
+export const getProductById =
+  async (id) => {
+    const response =
+      await fetch(
+        `${API_BASE_URL}/products/${encodeURIComponent(
+          id
+        )}`
+      );
+
+    return handleResponse(
+      response
+    );
+  };
+
+export const createProduct =
+  async (product) => {
+    const response =
+      await fetch(
+        `${API_BASE_URL}/products`,
+        {
+          method: "POST",
+          headers: getHeaders(),
+          body: JSON.stringify(
+            product
+          ),
+        }
+      );
+
+    return handleResponse(
+      response
+    );
+  };
+
+export const updateProduct =
+  async (
+    id,
+    product
+  ) => {
+    const response =
+      await fetch(
+        `${API_BASE_URL}/products/${encodeURIComponent(
+          id
+        )}`,
+        {
+          method: "PUT",
+          headers: getHeaders(),
+          body: JSON.stringify(
+            product
+          ),
+        }
+      );
+
+    return handleResponse(
+      response
+    );
+  };
+
+export const updateProductStatus =
+  async (
+    id,
+    isActive
+  ) => {
+    const response =
+      await fetch(
+        `${API_BASE_URL}/products/${encodeURIComponent(
+          id
+        )}/status`,
+        {
+          method: "PATCH",
+          headers: getHeaders(),
+          body: JSON.stringify({
+            isActive,
+          }),
+        }
+      );
+
+    return handleResponse(
+      response
+    );
+  };
+
+export const deleteProduct =
+  async (id) => {
+    const response =
+      await fetch(
+        `${API_BASE_URL}/products/${encodeURIComponent(
+          id
+        )}`,
+        {
+          method: "DELETE",
+          headers: getHeaders(),
+        }
+      );
+
+    return handleResponse(
+      response
+    );
+  };

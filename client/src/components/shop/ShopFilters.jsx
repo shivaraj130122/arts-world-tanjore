@@ -1,12 +1,22 @@
 import { classNames } from "../../utils/helpers";
-import { PRICE_RANGES, AVAILABILITY_OPTIONS } from "../../utils/productFilters";
-import { categories } from "../../constants/categories";
+import {
+  PRICE_RANGES,
+  AVAILABILITY_OPTIONS,
+} from "../../utils/productFilters";
 
-// Pure presentational filter controls. Used directly for the desktop
-// sidebar, and reused inside MobileFilterDrawer so filter logic only
-// exists in one place.
-const ShopFilters = ({ filters, onChange, onClear }) => {
-  const categoryOptions = [{ id: "all", title: "All", slug: "all" }, ...categories];
+const ShopFilters = ({
+  filters,
+  onChange,
+  onClear,
+  categories = [],
+}) => {
+  const categoryOptions = [
+    { _id: "all", title: "All", slug: "all" },
+    ...categories.filter(
+      (category) =>
+        category && category.isActive !== false
+    ),
+  ];
 
   return (
     <div className="space-y-8">
@@ -15,13 +25,17 @@ const ShopFilters = ({ filters, onChange, onClear }) => {
           Categories
         </h3>
         <ul className="space-y-1.5 text-sm">
-          {categoryOptions.map((cat) => {
-            const isActive = filters.category === cat.slug;
+          {categoryOptions.map((category) => {
+            const isActive =
+              filters.category === category.slug;
+
             return (
-              <li key={cat.slug}>
+              <li key={category._id}>
                 <button
                   type="button"
-                  onClick={() => onChange({ category: cat.slug })}
+                  onClick={() =>
+                    onChange({ category: category.slug })
+                  }
                   className={classNames(
                     "block w-full rounded-lg px-3 py-2 text-left transition",
                     isActive
@@ -29,7 +43,7 @@ const ShopFilters = ({ filters, onChange, onClear }) => {
                       : "text-text/70 hover:bg-primary/10 hover:text-primary"
                   )}
                 >
-                  {cat.title}
+                  {category.title}
                 </button>
               </li>
             );
@@ -43,12 +57,16 @@ const ShopFilters = ({ filters, onChange, onClear }) => {
         </h3>
         <ul className="space-y-1.5 text-sm">
           {PRICE_RANGES.map((range) => {
-            const isActive = filters.priceRange === range.id;
+            const isActive =
+              filters.priceRange === range.id;
+
             return (
               <li key={range.id}>
                 <button
                   type="button"
-                  onClick={() => onChange({ priceRange: range.id })}
+                  onClick={() =>
+                    onChange({ priceRange: range.id })
+                  }
                   className={classNames(
                     "block w-full rounded-lg px-3 py-2 text-left transition",
                     isActive
@@ -69,13 +87,17 @@ const ShopFilters = ({ filters, onChange, onClear }) => {
           Availability
         </h3>
         <ul className="space-y-1.5 text-sm">
-          {AVAILABILITY_OPTIONS.map((opt) => {
-            const isActive = filters.availability === opt.id;
+          {AVAILABILITY_OPTIONS.map((option) => {
+            const isActive =
+              filters.availability === option.id;
+
             return (
-              <li key={opt.id}>
+              <li key={option.id}>
                 <button
                   type="button"
-                  onClick={() => onChange({ availability: opt.id })}
+                  onClick={() =>
+                    onChange({ availability: option.id })
+                  }
                   className={classNames(
                     "block w-full rounded-lg px-3 py-2 text-left transition",
                     isActive
@@ -83,7 +105,7 @@ const ShopFilters = ({ filters, onChange, onClear }) => {
                       : "text-text/70 hover:bg-primary/10 hover:text-primary"
                   )}
                 >
-                  {opt.label}
+                  {option.label}
                 </button>
               </li>
             );

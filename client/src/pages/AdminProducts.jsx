@@ -6,7 +6,9 @@ import {
   FiX,
 } from "react-icons/fi";
 import toast from "react-hot-toast";
+
 import Container from "../components/ui/Container";
+
 import {
   getAdminProducts,
   createProduct,
@@ -15,6 +17,7 @@ import {
   updateProductStatus,
 } from "../services/productService";
 
+import { getCategories } from "../services/categoryService";
 import { uploadImage } from "../services/uploadService";
 
 const emptyProduct = {
@@ -46,19 +49,27 @@ const emptyProduct = {
 
 const AdminProducts = () => {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+
   const [form, setForm] = useState({
     ...emptyProduct,
   });
-const [isUploadingMainImage, setIsUploadingMainImage] =
-  useState(false);
 
-const [isUploadingAdditionalImages, setIsUploadingAdditionalImages] =
-  useState(false);
+  const [isUploadingMainImage, setIsUploadingMainImage] =
+    useState(false);
 
+  const [isUploadingAdditionalImages, setIsUploadingAdditionalImages] =
+    useState(false);
+
+  // =====================================================
+  // LOAD PRODUCTS
+  // =====================================================
 
   const loadProducts = async () => {
     try {
@@ -83,20 +94,59 @@ const [isUploadingAdditionalImages, setIsUploadingAdditionalImages] =
     }
   };
 
+  // =====================================================
+  // LOAD CATEGORIES
+  // =====================================================
+
+  const loadCategories = async () => {
+    try {
+      const data = await getCategories();
+
+      setCategories(data.categories || []);
+    } catch (error) {
+      console.error(
+        "Load categories error:",
+        error
+      );
+
+      toast.error(
+        error?.response?.data?.message ||
+          error.message ||
+          "Unable to load categories"
+      );
+    }
+  };
+
+  // =====================================================
+  // INITIAL LOAD
+  // =====================================================
+
   useEffect(() => {
     let cancelled = false;
 
-    const loadInitialProducts = async () => {
+    const loadInitialData = async () => {
       try {
-        const data = await getAdminProducts();
+        const [
+          productsData,
+          categoriesData,
+        ] = await Promise.all([
+          getAdminProducts(),
+          getCategories(),
+        ]);
 
         if (!cancelled) {
-          setProducts(data.products || []);
+          setProducts(
+            productsData.products || []
+          );
+
+          setCategories(
+            categoriesData.categories || []
+          );
         }
       } catch (error) {
         if (!cancelled) {
           console.error(
-            "Load products error:",
+            "Load admin products data error:",
             error
           );
 
@@ -113,12 +163,16 @@ const [isUploadingAdditionalImages, setIsUploadingAdditionalImages] =
       }
     };
 
-    loadInitialProducts();
+    loadInitialData();
 
     return () => {
       cancelled = true;
     };
   }, []);
+
+  // =====================================================
+  // HANDLE FORM CHANGE
+  // =====================================================
 
   const handleChange = (event) => {
     const {
@@ -136,237 +190,342 @@ const [isUploadingAdditionalImages, setIsUploadingAdditionalImages] =
           : value,
     }));
   };
- const handleMainImageUpload = async (event) => {
-  const file = event.target.files?.[0];
 
-  if (!file) {
-    return;
-  }
+  // =====================================================
+  // MAIN IMAGE UPLOAD
+  // =====================================================
 
-  try {
-    setIsUploadingMainImage(true);
+  const handleMainImageUpload = async (event) => {
+    const file =
+      event.target.files?.[0];
 
-    const data = await uploadImage(file);
-
-    if (!data?.success || !data?.image?.url) {
-      throw new Error(
-        data?.message || "Image upload failed"
-      );
+    if (!file) {
+      return;
     }
 
-    setForm((current) => ({
-      ...current,
-      image: data.image.url,
-    }));
+    try {
+      setIsUploadingMainImage(true);
 
-    toast.success(
-      "Main image uploaded successfully"
-    );
-  } catch (error) {
-    console.error(
-      "Main image upload error:",
-      error
-    );
+      const data =
+        await uploadImage(file);
 
-    toast.error(
-      error?.response?.data?.message ||
-        error.message ||
-        "Unable to upload main image"
-    );
-  } 
-
-
-finally {
-    setIsUploadingMainImage(false);
-    event.target.value = "";
-  }
-};
-
-const handleAdditionalImagesUpload = async (event) => {
-  const files = Array.from(
-    event.target.files || []
-  );
-
-  if (files.length === 0) {
-    return;
-  }
-
-  try {
-    setIsUploadingAdditionalImages(true);
-
-    const uploadedUrls = [];
-
-    for (const file of files) {
-      const data = await uploadImage(file);
-
-      if (!data?.success || !data?.image?.url) {
+      if (
+        !data?.success ||
+        !data?.image?.url
+      ) {
         throw new Error(
           data?.message ||
-            `Failed to upload ${file.name}`
+            "Image upload failed"
         );
       }
 
-      uploadedUrls.push(data.image.url);
-    }
-
-    setForm((current) => {
-      const existingImages = String(
-        current.images || ""
-      )
-        .split("\n")
-        .map((item) => item.trim())
-        .filter(Boolean);
-
-      return {
+      setForm((current) => ({
         ...current,
-        images: [
-          ...existingImages,
-          ...uploadedUrls,
-        ].join("\n"),
-      };
-    });
+        image: data.image.url,
+      }));
 
-    toast.success(
-      `${uploadedUrls.length} image${
-        uploadedUrls.length > 1 ? "s" : ""
-      } uploaded successfully`
-    );
-  } catch (error) {
-    console.error(
-      "Additional images upload error:",
-      error
-    );
-
-    toast.error(
-      error?.response?.data?.message ||
-        error.message ||
-        "Unable to upload additional images"
-    );
-  } finally {
-    setIsUploadingAdditionalImages(false);
-    event.target.value = "";
-  }
-};
-
-const handleToggleProductStatus = async (product) => {
-  const nextStatus = product.isActive === false;
-
-  try {
-    const data = await updateProductStatus(
-      product._id,
-      nextStatus
-    );
-
-    if (!data?.success) {
-      throw new Error(
-        data?.message ||
-          "Unable to update product status"
+      toast.success(
+        "Main image uploaded successfully"
       );
+    } catch (error) {
+      console.error(
+        "Main image upload error:",
+        error
+      );
+
+      toast.error(
+        error?.response?.data?.message ||
+          error.message ||
+          "Unable to upload main image"
+      );
+    } finally {
+      setIsUploadingMainImage(false);
+      event.target.value = "";
     }
+  };
 
-    setProducts((current) =>
-      current.map((item) =>
-        item._id === product._id
-          ? {
-              ...item,
-              isActive: nextStatus,
-            }
-          : item
-      )
-    );
+  // =====================================================
+  // ADDITIONAL IMAGES UPLOAD
+  // =====================================================
 
-    toast.success(
-      nextStatus
-        ? "Product activated successfully"
-        : "Product muted successfully"
-    );
-  } catch (error) {
-    console.error(
-      "Update product status error:",
-      error
-    );
+  const handleAdditionalImagesUpload =
+    async (event) => {
+      const files = Array.from(
+        event.target.files || []
+      );
 
-    toast.error(
-      error?.response?.data?.message ||
-        error.message ||
-        "Unable to update product status"
-    );
-  }
-};
+      if (files.length === 0) {
+        return;
+      }
 
-const openCreateForm = () => {
-  setEditingId(null);
+      try {
+        setIsUploadingAdditionalImages(
+          true
+        );
 
-  setForm({
-    ...emptyProduct,
-  });
+        const uploadedUrls = [];
 
-  setShowForm(true);
-};
+        for (const file of files) {
+          const data =
+            await uploadImage(file);
 
-const openEditForm = (product) => {
-  setEditingId(product._id);
+          if (
+            !data?.success ||
+            !data?.image?.url
+          ) {
+            throw new Error(
+              data?.message ||
+                `Failed to upload ${file.name}`
+            );
+          }
+
+          uploadedUrls.push(
+            data.image.url
+          );
+        }
+
+        setForm((current) => {
+          const existingImages =
+            String(
+              current.images || ""
+            )
+              .split("\n")
+              .map((item) =>
+                item.trim()
+              )
+              .filter(Boolean);
+
+          return {
+            ...current,
+            images: [
+              ...existingImages,
+              ...uploadedUrls,
+            ].join("\n"),
+          };
+        });
+
+        toast.success(
+          `${uploadedUrls.length} image${
+            uploadedUrls.length > 1
+              ? "s"
+              : ""
+          } uploaded successfully`
+        );
+      } catch (error) {
+        console.error(
+          "Additional images upload error:",
+          error
+        );
+
+        toast.error(
+          error?.response?.data?.message ||
+            error.message ||
+            "Unable to upload additional images"
+        );
+      } finally {
+        setIsUploadingAdditionalImages(
+          false
+        );
+
+        event.target.value = "";
+      }
+    };
+
+  // =====================================================
+  // MUTE / UNMUTE PRODUCT
+  // =====================================================
+
+  const handleToggleProductStatus =
+    async (product) => {
+      const nextStatus =
+        product.isActive === false;
+
+      try {
+        const data =
+          await updateProductStatus(
+            product._id,
+            nextStatus
+          );
+
+        if (!data?.success) {
+          throw new Error(
+            data?.message ||
+              "Unable to update product status"
+          );
+        }
+
+        setProducts((current) =>
+          current.map((item) =>
+            item._id === product._id
+              ? {
+                  ...item,
+                  isActive:
+                    nextStatus,
+                }
+              : item
+          )
+        );
+
+        toast.success(
+          nextStatus
+            ? "Product activated successfully"
+            : "Product muted successfully"
+        );
+      } catch (error) {
+        console.error(
+          "Update product status error:",
+          error
+        );
+
+        toast.error(
+          error?.response?.data?.message ||
+            error.message ||
+            "Unable to update product status"
+        );
+      }
+    };
+
+  // =====================================================
+  // CREATE FORM
+  // =====================================================
+
+  const openCreateForm = () => {
+    setEditingId(null);
 
     setForm({
-      _id: String(product._id ?? ""),
-      name: String(product.name ?? ""),
-      category: String(product.category ?? ""),
+      ...emptyProduct,
+    });
+
+    setShowForm(true);
+
+    if (categories.length === 0) {
+      loadCategories();
+    }
+  };
+
+  // =====================================================
+  // EDIT FORM
+  // =====================================================
+
+  const openEditForm = (product) => {
+    setEditingId(product._id);
+
+    setForm({
+      _id: String(
+        product._id ?? ""
+      ),
+
+      name: String(
+        product.name ?? ""
+      ),
+
+      category: String(
+        product.category ?? ""
+      ),
+
       description: String(
         product.description ?? ""
       ),
-      price: product.price ?? "",
+
+      price:
+        product.price ?? "",
+
       originalPrice:
         product.originalPrice ?? "",
-      discount: product.discount ?? 0,
-      rating: product.rating ?? 0,
+
+      discount:
+        product.discount ?? 0,
+
+      rating:
+        product.rating ?? 0,
+
       reviewCount:
         product.reviewCount ?? 0,
+
       stock:
-        product.stock ?? "in-stock",
-      badge: String(product.badge ?? ""),
+        product.stock ||
+        "in-stock",
+
+      badge: String(
+        product.badge ?? ""
+      ),
+
       isFeatured: Boolean(
         product.isFeatured
       ),
+
       isBestSeller: Boolean(
         product.isBestSeller
       ),
-      isNew: Boolean(product.isNew),
-      image: String(product.image ?? ""),
-      images: Array.isArray(product.images)
-        ? product.images
-            .map((item) =>
-              String(item ?? "")
-            )
-            .filter(Boolean)
-            .join("\n")
-        : "",
-      sku: String(product.sku ?? ""),
+
+      isNew: Boolean(
+        product.isNew
+      ),
+
+      image: String(
+        product.image ?? ""
+      ),
+
+      images:
+        Array.isArray(
+          product.images
+        )
+          ? product.images
+              .map((item) =>
+                String(
+                  item ?? ""
+                )
+              )
+              .filter(Boolean)
+              .join("\n")
+          : "",
+
+      sku: String(
+        product.sku ?? ""
+      ),
+
       stockCount:
         product.stockCount ?? 0,
+
       material: String(
         product.material ?? ""
       ),
+
       style: String(
         product.style ?? ""
       ),
+
       dimensions: String(
         product.dimensions ?? ""
       ),
+
       frame: String(
         product.frame ?? ""
       ),
+
       handmade:
         product.handmade !== false,
+
       customizable: Boolean(
         product.customizable
       ),
     });
 
     setShowForm(true);
+
+    if (categories.length === 0) {
+      loadCategories();
+    }
   };
 
+  // =====================================================
+  // CLOSE FORM
+  // =====================================================
+
   const closeForm = () => {
-    if (isSaving) return;
+    if (isSaving) {
+      return;
+    }
 
     setShowForm(false);
     setEditingId(null);
@@ -375,6 +534,10 @@ const openEditForm = (product) => {
       ...emptyProduct,
     });
   };
+
+  // =====================================================
+  // PREPARE PAYLOAD
+  // =====================================================
 
   const preparePayload = () => {
     return {
@@ -394,14 +557,18 @@ const openEditForm = (product) => {
         form.description ?? ""
       ).trim(),
 
-      price: Number(form.price),
+      price: Number(
+        form.price
+      ),
 
       originalPrice:
         form.originalPrice === "" ||
         form.originalPrice === null ||
         form.originalPrice === undefined
           ? null
-          : Number(form.originalPrice),
+          : Number(
+              form.originalPrice
+            ),
 
       discount: Number(
         form.discount ?? 0
@@ -416,7 +583,8 @@ const openEditForm = (product) => {
       ),
 
       stock:
-        form.stock || "in-stock",
+        form.stock ||
+        "in-stock",
 
       badge: String(
         form.badge ?? ""
@@ -430,7 +598,9 @@ const openEditForm = (product) => {
         form.isBestSeller
       ),
 
-      isNew: Boolean(form.isNew),
+      isNew: Boolean(
+        form.isNew
+      ),
 
       image: String(
         form.image ?? ""
@@ -480,17 +650,31 @@ const openEditForm = (product) => {
     };
   };
 
-  const handleSubmit = async (event) => {
+  // =====================================================
+  // SAVE PRODUCT
+  // =====================================================
+
+  const handleSubmit = async (
+    event
+  ) => {
     event.preventDefault();
 
     if (
-      !String(form._id ?? "").trim() ||
-      !String(form.name ?? "").trim() ||
-      !String(form.category ?? "").trim() ||
+      !String(
+        form._id ?? ""
+      ).trim() ||
+      !String(
+        form.name ?? ""
+      ).trim() ||
+      !String(
+        form.category ?? ""
+      ).trim() ||
       !String(
         form.description ?? ""
       ).trim() ||
-      !String(form.sku ?? "").trim()
+      !String(
+        form.sku ?? ""
+      ).trim()
     ) {
       toast.error(
         "Please fill all required fields."
@@ -548,7 +732,13 @@ const openEditForm = (product) => {
     }
   };
 
-  const handleDelete = async (id) => {
+  // =====================================================
+  // DELETE PRODUCT
+  // =====================================================
+
+  const handleDelete = async (
+    id
+  ) => {
     const confirmed =
       window.confirm(
         "Are you sure you want to delete this product?"
@@ -580,9 +770,14 @@ const openEditForm = (product) => {
     }
   };
 
+  // =====================================================
+  // RENDER
+  // =====================================================
+
   return (
     <div className="py-10 sm:py-14">
       <Container>
+
         {/* Header */}
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -601,7 +796,9 @@ const openEditForm = (product) => {
 
           <button
             type="button"
-            onClick={openCreateForm}
+            onClick={
+              openCreateForm
+            }
             className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-background transition hover:bg-primary-light"
           >
             <FiPlus size={17} />
@@ -612,6 +809,7 @@ const openEditForm = (product) => {
         {/* Product Form */}
         {showForm && (
           <section className="mb-8 rounded-3xl border border-primary/10 bg-white p-6 shadow-sm sm:p-8">
+
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <h2 className="font-heading text-xl font-semibold text-primary">
@@ -627,8 +825,12 @@ const openEditForm = (product) => {
 
               <button
                 type="button"
-                onClick={closeForm}
-                disabled={isSaving}
+                onClick={
+                  closeForm
+                }
+                disabled={
+                  isSaving
+                }
                 className="grid h-10 w-10 place-items-center rounded-full text-text/60 transition hover:bg-primary/10 hover:text-primary"
                 aria-label="Close form"
               >
@@ -637,11 +839,16 @@ const openEditForm = (product) => {
             </div>
 
             <form
-              onSubmit={handleSubmit}
+              onSubmit={
+                handleSubmit
+              }
               className="space-y-6"
             >
+
               {/* Basic Information */}
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+
+                {/* Product ID */}
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-text">
                     Product ID *
@@ -649,15 +856,28 @@ const openEditForm = (product) => {
 
                   <input
                     name="_id"
-                    value={form._id}
-                    onChange={handleChange}
+                    value={
+                      form._id
+                    }
+                    onChange={
+                      handleChange
+                    }
                     disabled={
-                      Boolean(editingId)
+                      Boolean(
+                        editingId
+                      )
                     }
                     className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary disabled:bg-gray-100"
                   />
+
+                  {editingId && (
+                    <p className="mt-1 text-xs text-text/50">
+                      Product ID cannot be changed while editing.
+                    </p>
+                  )}
                 </div>
 
+                {/* SKU */}
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-text">
                     SKU *
@@ -665,12 +885,17 @@ const openEditForm = (product) => {
 
                   <input
                     name="sku"
-                    value={form.sku}
-                    onChange={handleChange}
+                    value={
+                      form.sku
+                    }
+                    onChange={
+                      handleChange
+                    }
                     className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
                   />
                 </div>
 
+                {/* Product Name */}
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-text">
                     Product Name *
@@ -678,24 +903,72 @@ const openEditForm = (product) => {
 
                   <input
                     name="name"
-                    value={form.name}
-                    onChange={handleChange}
+                    value={
+                      form.name
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder="Enter product name"
                     className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
                   />
                 </div>
 
+                {/* Category */}
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-text">
                     Category *
                   </label>
 
-                  <input
+                  <select
                     name="category"
-                    value={form.category}
-                    onChange={handleChange}
-                    placeholder="tanjore-paintings"
-                    className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
-                  />
+                    value={
+                      form.category
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    className="w-full rounded-lg border border-primary/20 bg-white px-4 py-2.5 text-sm outline-none focus:border-primary"
+                  >
+                    <option value="">
+                      Select category
+                    </option>
+
+                    {categories
+                      .filter(
+                        (category) =>
+                          category.isActive !==
+                          false
+                      )
+                      .map(
+                        (category) => (
+                          <option
+                            key={
+                              category._id
+                            }
+                            value={
+                              category.slug
+                            }
+                          >
+                            {
+                              category.name ||
+                              category.title
+                            }
+                          </option>
+                        )
+                      )}
+                  </select>
+
+                  {categories.length ===
+                    0 && (
+                    <p className="mt-1 text-xs text-text/50">
+                      No categories available.
+                    </p>
+                  )}
+
+                  <p className="mt-1 text-xs text-text/50">
+                    Select one category for this product.
+                  </p>
                 </div>
               </div>
 
@@ -707,8 +980,12 @@ const openEditForm = (product) => {
 
                 <textarea
                   name="description"
-                  value={form.description}
-                  onChange={handleChange}
+                  value={
+                    form.description
+                  }
+                  onChange={
+                    handleChange
+                  }
                   rows={4}
                   className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
                 />
@@ -716,6 +993,7 @@ const openEditForm = (product) => {
 
               {/* Pricing */}
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-text">
                     Price *
@@ -725,8 +1003,12 @@ const openEditForm = (product) => {
                     type="number"
                     min="0"
                     name="price"
-                    value={form.price}
-                    onChange={handleChange}
+                    value={
+                      form.price
+                    }
+                    onChange={
+                      handleChange
+                    }
                     className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
                   />
                 </div>
@@ -743,7 +1025,9 @@ const openEditForm = (product) => {
                     value={
                       form.originalPrice
                     }
-                    onChange={handleChange}
+                    onChange={
+                      handleChange
+                    }
                     className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
                   />
                 </div>
@@ -761,7 +1045,9 @@ const openEditForm = (product) => {
                     value={
                       form.discount
                     }
-                    onChange={handleChange}
+                    onChange={
+                      handleChange
+                    }
                     className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
                   />
                 </div>
@@ -769,6 +1055,7 @@ const openEditForm = (product) => {
 
               {/* Stock */}
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-text">
                     Stock Status
@@ -779,7 +1066,9 @@ const openEditForm = (product) => {
                     value={
                       form.stock
                     }
-                    onChange={handleChange}
+                    onChange={
+                      handleChange
+                    }
                     className="w-full rounded-lg border border-primary/20 bg-white px-4 py-2.5 text-sm outline-none focus:border-primary"
                   >
                     <option value="in-stock">
@@ -808,152 +1097,194 @@ const openEditForm = (product) => {
                     value={
                       form.stockCount
                     }
-                    onChange={handleChange}
+                    onChange={
+                      handleChange
+                    }
                     className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
                   />
                 </div>
               </div>
 
               {/* Images */}
-          {/* Images */}
-<div className="space-y-6">
-  {/* Main Image */}
-  <div>
-    <label className="mb-2 block text-sm font-medium text-text">
-      Main Product Image
-    </label>
+              <div className="space-y-6">
 
-    <div className="rounded-2xl border border-primary/15 bg-background p-4">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <label className="inline-flex cursor-pointer items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-background transition hover:bg-primary-light">
-          {isUploadingMainImage
-            ? "Uploading..."
-            : "Upload Main Image"}
+                {/* Main Image */}
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-text">
+                    Main Product Image
+                  </label>
 
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleMainImageUpload}
-            disabled={isUploadingMainImage}
-            className="hidden"
-          />
-        </label>
+                  <div className="rounded-2xl border border-primary/15 bg-background p-4">
 
-        <span className="text-xs text-text/50">
-          JPG, PNG, WEBP • Maximum 10 MB
-        </span>
-      </div>
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                      <label className="inline-flex cursor-pointer items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-background transition hover:bg-primary-light">
+                        {isUploadingMainImage
+                          ? "Uploading..."
+                          : "Upload Main Image"}
 
-      {form.image && (
-        <div className="mt-4">
-          <p className="mb-2 text-xs font-medium text-text/60">
-            Main image preview
-          </p>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={
+                            handleMainImageUpload
+                          }
+                          disabled={
+                            isUploadingMainImage
+                          }
+                          className="hidden"
+                        />
+                      </label>
 
-          <div className="relative h-40 w-40 overflow-hidden rounded-xl border border-primary/10 bg-white">
-            <img
-              src={form.image}
-              alt="Main product preview"
-              className="h-full w-full object-cover"
-            />
-          </div>
-        </div>
-      )}
+                      <span className="text-xs text-text/50">
+                        JPG, PNG, WEBP • Maximum 10 MB
+                      </span>
+                    </div>
 
-      {/* Keep existing URL option */}
-      <div className="mt-4">
-        <label className="mb-1.5 block text-xs font-medium text-text/60">
-          Or use an existing image URL
-        </label>
+                    {form.image && (
+                      <div className="mt-4">
+                        <p className="mb-2 text-xs font-medium text-text/60">
+                          Main image preview
+                        </p>
 
-        <input
-          name="image"
-          value={form.image}
-          onChange={handleChange}
-          placeholder="https://..."
-          className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
-        />
-      </div>
-    </div>
-  </div>
+                        <div className="relative h-40 w-40 overflow-hidden rounded-xl border border-primary/10 bg-white">
+                          <img
+                            src={
+                              form.image
+                            }
+                            alt="Main product preview"
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      </div>
+                    )}
 
-  {/* Additional Images */}
-  <div>
-    <label className="mb-2 block text-sm font-medium text-text">
-      Additional Product Images
-    </label>
+                    <div className="mt-4">
+                      <label className="mb-1.5 block text-xs font-medium text-text/60">
+                        Or use an existing image URL
+                      </label>
 
-    <div className="rounded-2xl border border-primary/15 bg-background p-4">
-      <label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-primary/20 px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5">
-        {isUploadingAdditionalImages
-          ? "Uploading..."
-          : "Upload Multiple Images"}
-
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={handleAdditionalImagesUpload}
-          disabled={isUploadingAdditionalImages}
-          className="hidden"
-        />
-      </label>
-
-      <p className="mt-2 text-xs text-text/50">
-        Select multiple images at once.
-      </p>
-
-      {/* Image previews */}
-      {String(form.images || "").trim() && (
-        <div className="mt-5">
-          <p className="mb-3 text-xs font-medium text-text/60">
-            Additional image previews
-          </p>
-
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {String(form.images || "")
-              .split("\n")
-              .map((url) => url.trim())
-              .filter(Boolean)
-              .map((url, index) => (
-                <div
-                  key={`${url}-${index}`}
-                  className="overflow-hidden rounded-xl border border-primary/10 bg-white"
-                >
-                  <div className="aspect-square">
-                    <img
-                      src={url}
-                      alt={`Additional product ${index + 1}`}
-                      className="h-full w-full object-cover"
-                    />
+                      <input
+                        name="image"
+                        value={
+                          form.image
+                        }
+                        onChange={
+                          handleChange
+                        }
+                        placeholder="https://..."
+                        className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
+                      />
+                    </div>
                   </div>
                 </div>
-              ))}
-          </div>
-        </div>
-      )}
 
-      {/* Keep existing URL option */}
-      <div className="mt-5">
-        <label className="mb-1.5 block text-xs font-medium text-text/60">
-          Or use existing image URLs
-        </label>
+                {/* Additional Images */}
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-text">
+                    Additional Product Images
+                  </label>
 
-        <textarea
-          name="images"
-          value={form.images}
-          onChange={handleChange}
-          rows={3}
-          placeholder="One URL per line"
-          className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
-        />
-      </div>
-    </div>
-  </div>
-</div>
+                  <div className="rounded-2xl border border-primary/15 bg-background p-4">
+
+                    <label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-primary/20 px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5">
+                      {isUploadingAdditionalImages
+                        ? "Uploading..."
+                        : "Upload Multiple Images"}
+
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={
+                          handleAdditionalImagesUpload
+                        }
+                        disabled={
+                          isUploadingAdditionalImages
+                        }
+                        className="hidden"
+                      />
+                    </label>
+
+                    <p className="mt-2 text-xs text-text/50">
+                      Select multiple images at once.
+                    </p>
+
+                    {String(
+                      form.images || ""
+                    ).trim() && (
+                      <div className="mt-5">
+
+                        <p className="mb-3 text-xs font-medium text-text/60">
+                          Additional image previews
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                          {String(
+                            form.images || ""
+                          )
+                            .split("\n")
+                            .map(
+                              (
+                                url
+                              ) =>
+                                url.trim()
+                            )
+                            .filter(
+                              Boolean
+                            )
+                            .map(
+                              (
+                                url,
+                                index
+                              ) => (
+                                <div
+                                  key={`${url}-${index}`}
+                                  className="overflow-hidden rounded-xl border border-primary/10 bg-white"
+                                >
+                                  <div className="aspect-square">
+                                    <img
+                                      src={
+                                        url
+                                      }
+                                      alt={`Additional product ${
+                                        index +
+                                        1
+                                      }`}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  </div>
+                                </div>
+                              )
+                            )}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="mt-5">
+                      <label className="mb-1.5 block text-xs font-medium text-text/60">
+                        Or use existing image URLs
+                      </label>
+
+                      <textarea
+                        name="images"
+                        value={
+                          form.images
+                        }
+                        onChange={
+                          handleChange
+                        }
+                        rows={3}
+                        placeholder="One URL per line"
+                        className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               {/* Product Details */}
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-text">
                     Material
@@ -964,7 +1295,9 @@ const openEditForm = (product) => {
                     value={
                       form.material
                     }
-                    onChange={handleChange}
+                    onChange={
+                      handleChange
+                    }
                     className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
                   />
                 </div>
@@ -979,7 +1312,9 @@ const openEditForm = (product) => {
                     value={
                       form.style
                     }
-                    onChange={handleChange}
+                    onChange={
+                      handleChange
+                    }
                     className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
                   />
                 </div>
@@ -994,7 +1329,9 @@ const openEditForm = (product) => {
                     value={
                       form.dimensions
                     }
-                    onChange={handleChange}
+                    onChange={
+                      handleChange
+                    }
                     className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
                   />
                 </div>
@@ -1009,7 +1346,9 @@ const openEditForm = (product) => {
                     value={
                       form.frame
                     }
-                    onChange={handleChange}
+                    onChange={
+                      handleChange
+                    }
                     className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
                   />
                 </div>
@@ -1026,7 +1365,9 @@ const openEditForm = (product) => {
                   value={
                     form.badge
                   }
-                  onChange={handleChange}
+                  onChange={
+                    handleChange
+                  }
                   placeholder="Best Seller"
                   className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
                 />
@@ -1034,6 +1375,7 @@ const openEditForm = (product) => {
 
               {/* Flags */}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+
                 <label className="flex items-center gap-2 text-sm text-text">
                   <input
                     type="checkbox"
@@ -1041,7 +1383,9 @@ const openEditForm = (product) => {
                     checked={
                       form.isFeatured
                     }
-                    onChange={handleChange}
+                    onChange={
+                      handleChange
+                    }
                   />
                   Featured
                 </label>
@@ -1053,7 +1397,9 @@ const openEditForm = (product) => {
                     checked={
                       form.isBestSeller
                     }
-                    onChange={handleChange}
+                    onChange={
+                      handleChange
+                    }
                   />
                   Best Seller
                 </label>
@@ -1065,7 +1411,9 @@ const openEditForm = (product) => {
                     checked={
                       form.isNew
                     }
-                    onChange={handleChange}
+                    onChange={
+                      handleChange
+                    }
                   />
                   New Arrival
                 </label>
@@ -1077,7 +1425,9 @@ const openEditForm = (product) => {
                     checked={
                       form.customizable
                     }
-                    onChange={handleChange}
+                    onChange={
+                      handleChange
+                    }
                   />
                   Customizable
                 </label>
@@ -1090,17 +1440,24 @@ const openEditForm = (product) => {
                   checked={
                     form.handmade
                   }
-                  onChange={handleChange}
+                  onChange={
+                    handleChange
+                  }
                 />
                 Handmade
               </label>
 
               {/* Buttons */}
               <div className="flex flex-col gap-3 border-t border-primary/10 pt-6 sm:flex-row sm:justify-end">
+
                 <button
                   type="button"
-                  onClick={closeForm}
-                  disabled={isSaving}
+                  onClick={
+                    closeForm
+                  }
+                  disabled={
+                    isSaving
+                  }
                   className="rounded-full border border-primary/20 px-6 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5"
                 >
                   Cancel
@@ -1108,7 +1465,9 @@ const openEditForm = (product) => {
 
                 <button
                   type="submit"
-                  disabled={isSaving}
+                  disabled={
+                    isSaving
+                  }
                   className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-background transition hover:bg-primary-light disabled:opacity-60"
                 >
                   {isSaving
@@ -1124,6 +1483,7 @@ const openEditForm = (product) => {
 
         {/* Product Catalog */}
         <section className="rounded-3xl border border-primary/10 bg-white shadow-sm">
+
           <div className="border-b border-primary/10 p-6">
             <h2 className="font-heading text-xl font-semibold text-primary">
               Product Catalog
@@ -1138,52 +1498,62 @@ const openEditForm = (product) => {
             <div className="p-10 text-center text-sm text-text/55">
               Loading products...
             </div>
-          ) : products.length === 0 ? (
+          ) : products.length ===
+            0 ? (
             <div className="p-10 text-center text-sm text-text/55">
               No products found.
             </div>
           ) : (
-         <div className="divide-y divide-primary/10">
-  {products.map(
-    (product) => (
-      <div
-        key={product._id}
-        className="flex flex-col gap-5 p-6 lg:flex-row lg:items-center lg:justify-between"
-      >
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-semibold text-primary">
-              {product.name}
-            </h3>
+            <div className="divide-y divide-primary/10">
 
-            {product.badge && (
-              <span className="rounded-full bg-secondary/20 px-2.5 py-1 text-[10px] font-bold uppercase text-primary">
-                {product.badge}
-              </span>
-            )}
+              {products.map(
+                (product) => (
+                  <div
+                    key={
+                      product._id
+                    }
+                    className="flex flex-col gap-5 p-6 lg:flex-row lg:items-center lg:justify-between"
+                  >
 
-            {product.isActive === false ? (
-              <span className="rounded-full bg-red-100 px-2.5 py-1 text-[10px] font-bold uppercase text-red-700">
-                Muted
-              </span>
-            ) : (
-              <span className="rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-bold uppercase text-green-700">
-                Active
-              </span>
-            )}
-          </div>
+                    <div className="min-w-0 flex-1">
 
-          <p className="mt-1 text-xs text-text/50">
-            ID: {product._id}
-          </p>
+                      <div className="flex flex-wrap items-center gap-2">
 
-      
+                        <h3 className="font-semibold text-primary">
+                          {
+                            product.name
+                          }
+                        </h3>
+
+                        {product.badge && (
+                          <span className="rounded-full bg-secondary/20 px-2.5 py-1 text-[10px] font-bold uppercase text-primary">
+                            {
+                              product.badge
+                            }
+                          </span>
+                        )}
+
+                        {product.isActive ===
+                        false ? (
+                          <span className="rounded-full bg-red-100 px-2.5 py-1 text-[10px] font-bold uppercase text-red-700">
+                            Muted
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-bold uppercase text-green-700">
+                            Active
+                          </span>
+                        )}
+                      </div>
+
                       <p className="mt-1 text-xs text-text/50">
                         ID:{" "}
-                        {product._id}
+                        {
+                          product._id
+                        }
                       </p>
 
                       <div className="mt-3 flex flex-wrap gap-3 text-xs text-text/60">
+
                         <span>
                           Category:{" "}
                           {
@@ -1216,52 +1586,71 @@ const openEditForm = (product) => {
                         </span>
                       </div>
                     </div>
-                    
-<div className="flex shrink-0 flex-wrap gap-2">
-  <button
-    type="button"
-    onClick={() =>
-      openEditForm(product)
-    }
-    className="inline-flex items-center gap-2 rounded-full border border-primary/20 px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/5"
-  >
-    <FiEdit2 size={15} />
-    Edit
-  </button>
 
-  <button
-    type="button"
-    onClick={() =>
-      handleToggleProductStatus(product)
-    }
-    className={
-      product.isActive === false
-        ? "inline-flex items-center gap-2 rounded-full border border-green-200 px-4 py-2.5 text-sm font-semibold text-green-700 transition hover:bg-green-50"
-        : "inline-flex items-center gap-2 rounded-full border border-amber-200 px-4 py-2.5 text-sm font-semibold text-amber-700 transition hover:bg-amber-50"
-    }
-  >
-    {product.isActive === false
-      ? "Unmute"
-      : "Mute"}
-  </button>
+                    <div className="flex shrink-0 flex-wrap gap-2">
 
-  <button
-    type="button"
-    onClick={() =>
-      handleDelete(product._id)
-    }
-    className="inline-flex items-center gap-2 rounded-full border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
-  >
-    <FiTrash2 size={15} />
-    Delete
-  </button>
-</div>
+                      {/* Edit */}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openEditForm(
+                            product
+                          )
+                        }
+                        className="inline-flex items-center gap-2 rounded-full border border-primary/20 px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/5"
+                      >
+                        <FiEdit2
+                          size={15}
+                        />
+                        Edit
+                      </button>
+
+                      {/* Mute / Unmute */}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleToggleProductStatus(
+                            product
+                          )
+                        }
+                        className={
+                          product.isActive ===
+                          false
+                            ? "inline-flex items-center gap-2 rounded-full border border-green-200 px-4 py-2.5 text-sm font-semibold text-green-700 transition hover:bg-green-50"
+                            : "inline-flex items-center gap-2 rounded-full border border-amber-200 px-4 py-2.5 text-sm font-semibold text-amber-700 transition hover:bg-amber-50"
+                        }
+                      >
+                        {product.isActive ===
+                        false
+                          ? "Unmute"
+                          : "Mute"}
+                      </button>
+
+                      {/* Delete */}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleDelete(
+                            product._id
+                          )
+                        }
+                        className="inline-flex items-center gap-2 rounded-full border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                      >
+                        <FiTrash2
+                          size={15}
+                        />
+                        Delete
+                      </button>
+
+                    </div>
                   </div>
                 )
               )}
+
             </div>
           )}
         </section>
+
       </Container>
     </div>
   );

@@ -20,9 +20,7 @@ const handleResponse = async (
 
 const getHeaders = () => {
   const token =
-    localStorage.getItem(
-      "aw_token"
-    );
+    localStorage.getItem("aw_token");
 
   return {
     "Content-Type":
@@ -49,6 +47,16 @@ export const getCollections =
     );
   };
 
+export const getAllCollectionsAdmin = async () => {
+  const response = await fetch(
+    `${API_BASE_URL}/collections/admin/all`,
+    {
+      headers: getHeaders(),
+    }
+  );
+
+  return handleResponse(response);
+};
 export const getCollectionBySlug =
   async (slug) => {
     const response =
@@ -56,20 +64,6 @@ export const getCollectionBySlug =
         `${API_BASE_URL}/collections/${encodeURIComponent(
           slug
         )}`
-      );
-
-    return handleResponse(
-      response
-    );
-  };
-export const getAllCollectionsAdmin =
-  async () => {
-    const response =
-      await fetch(
-        `${API_BASE_URL}/collections/admin/all`,
-        {
-          headers: getHeaders(),
-        }
       );
 
     return handleResponse(
@@ -122,27 +116,11 @@ export const updateCollection =
     );
   };
 
-export const deleteCollection =
-  async (id) => {
-    const response =
-      await fetch(
-        `${API_BASE_URL}/collections/${encodeURIComponent(
-          id
-        )}`,
-        {
-          method: "DELETE",
-          headers:
-            getHeaders(),
-        }
-      );
-
-    return handleResponse(
-      response
-    );
-  };
-// Admin: activate / mute collection
 export const updateCollectionStatus =
-  async (id, isActive) => {
+  async (
+    id,
+    isActive
+  ) => {
     const response =
       await fetch(
         `${API_BASE_URL}/collections/${encodeURIComponent(
@@ -155,6 +133,25 @@ export const updateCollectionStatus =
           body: JSON.stringify({
             isActive,
           }),
+        }
+      );
+
+    return handleResponse(
+      response
+    );
+  };
+
+export const deleteCollection =
+  async (id) => {
+    const response =
+      await fetch(
+        `${API_BASE_URL}/collections/${encodeURIComponent(
+          id
+        )}`,
+        {
+          method: "DELETE",
+          headers:
+            getHeaders(),
         }
       );
 

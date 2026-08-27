@@ -2,7 +2,7 @@ const express = require("express");
 
 const {
   getCollections,
-  getAllCollectionsAdmin,
+  getAdminCollections,
   getCollectionBySlug,
   createCollection,
   updateCollection,
@@ -18,18 +18,16 @@ const {
 const router = express.Router();
 
 // =====================================================
-// ADMIN ROUTES
+// ADMIN
 // =====================================================
 
-// Get all collections including muted
 router.get(
   "/admin/all",
   protect,
   adminOnly,
-  getAllCollectionsAdmin
+  getAdminCollections
 );
 
-// Create collection
 router.post(
   "/",
   protect,
@@ -37,7 +35,6 @@ router.post(
   createCollection
 );
 
-// Update collection
 router.put(
   "/:id",
   protect,
@@ -45,7 +42,6 @@ router.put(
   updateCollection
 );
 
-// Mute / Unmute collection
 router.patch(
   "/:id/status",
   protect,
@@ -53,7 +49,6 @@ router.patch(
   updateCollectionStatus
 );
 
-// Delete collection
 router.delete(
   "/:id",
   protect,
@@ -62,19 +57,17 @@ router.delete(
 );
 
 // =====================================================
-// PUBLIC ROUTES
+// PUBLIC
 // =====================================================
 
-// Get active collections only
-router.get(
-  "/",
-  getCollections
-);
-
-// Get one active collection
 router.get(
   "/:slug",
   getCollectionBySlug
+);
+
+router.get(
+  "/",
+  getCollections
 );
 
 module.exports = router;

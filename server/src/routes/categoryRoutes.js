@@ -2,7 +2,7 @@ const express = require("express");
 
 const {
   getCategories,
-  getAllCategoriesAdmin,
+  getAdminCategories,
   getCategoryBySlug,
   createCategory,
   updateCategory,
@@ -18,19 +18,16 @@ const {
 const router = express.Router();
 
 // =====================================================
-// ADMIN ROUTES
+// ADMIN
 // =====================================================
 
-// Get ALL categories for Admin Dashboard
-// Includes ACTIVE + MUTED categories
 router.get(
   "/admin/all",
   protect,
   adminOnly,
-  getAllCategoriesAdmin
+  getAdminCategories
 );
 
-// Create category
 router.post(
   "/",
   protect,
@@ -38,7 +35,6 @@ router.post(
   createCategory
 );
 
-// Update category
 router.put(
   "/:id",
   protect,
@@ -46,7 +42,6 @@ router.put(
   updateCategory
 );
 
-// Mute / Unmute category
 router.patch(
   "/:id/status",
   protect,
@@ -54,7 +49,6 @@ router.patch(
   updateCategoryStatus
 );
 
-// Delete category
 router.delete(
   "/:id",
   protect,
@@ -63,13 +57,17 @@ router.delete(
 );
 
 // =====================================================
-// PUBLIC ROUTES
+// PUBLIC
 // =====================================================
 
-// Only ACTIVE categories
-router.get("/", getCategories);
+router.get(
+  "/:slug",
+  getCategoryBySlug
+);
 
-// Get one ACTIVE category
-router.get("/:slug", getCategoryBySlug);
+router.get(
+  "/",
+  getCategories
+);
 
 module.exports = router;

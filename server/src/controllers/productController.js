@@ -1,7 +1,14 @@
 const Product = require("../models/Product");
+const Category = require("../models/Category");
 
-// GET /api/products
-const getProducts = async (req, res) => {
+// =====================================================
+// PUBLIC PRODUCTS
+// =====================================================
+
+const getProducts = async (
+  req,
+  res
+) => {
   try {
     const {
       category,
@@ -14,8 +21,40 @@ const getProducts = async (req, res) => {
       isActive: { $ne: false },
     };
 
+    // =================================================
+    // CATEGORY FILTER
+    //
+    // New products:
+    // category = slug
+    //
+    // Old products:
+    // category = title
+    //
+    // Both are supported.
+    // =================================================
+
     if (category) {
-      filter.category = category;
+      const normalizedCategory =
+        String(category)
+          .trim()
+          .toLowerCase();
+
+      const categoryDoc =
+        await Category.findOne({
+          slug: normalizedCategory,
+        });
+
+      if (categoryDoc) {
+        filter.category = {
+          $in: [
+            categoryDoc.slug,
+            categoryDoc.title,
+          ],
+        };
+      } else {
+        filter.category =
+          normalizedCategory;
+      }
     }
 
     if (featured === "true") {
@@ -30,11 +69,14 @@ const getProducts = async (req, res) => {
       filter.isNew = true;
     }
 
-    const products = await Product.find(filter).sort({
-      createdAt: -1,
-    });
+    const products =
+      await Product.find(
+        filter
+      ).sort({
+        createdAt: -1,
+      });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       count: products.length,
       products,
@@ -45,190 +87,422 @@ const getProducts = async (req, res) => {
       error.message
     );
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Failed to fetch products",
+      message:
+        "Failed to fetch products",
     });
   }
 };
 
-// GET /api/products/admin/all
-const getAdminProducts = async (req, res) => {
-  try {
-    const products = await Product.find({}).sort({
-      createdAt: -1,
-    });
+// =====================================================
+// ADMIN ALL PRODUCTS
+// Active + muted
+// =====================================================
 
-    res.status(200).json({
-      success: true,
-      count: products.length,
-      products,
-    });
-  } catch (error) {
-    console.error(
-      "Get admin products error:",
-      error.message
-    );
+const getAdminProducts =
+  async (req, res) => {
+    try {
+      const products =
+        await Product.find({}).sort({
+          createdAt: -1,
+        });
 
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch admin products",
-    });
-  }
-};
+      return res.status(200).json({
+        success: true,
+        count: products.length,
+        products,
+      });
+    } catch (error) {
+      console.error(
+        "Get admin products error:",
+        error.message
+      );
 
-// GET /api/products/:id
-const getProductById = async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id);
-
-    if (!product) {
-      return res.status(404).json({
+      return res.status(500).json({
         success: false,
-        message: "Product not found",
+        message:
+          "Failed to fetch admin products",
       });
     }
+  };
 
-    res.status(200).json({
-      success: true,
-      product,
-    });
-  } catch (error) {
-    console.error("Get product error:", error.message);
+// =====================================================
+// GET ONE PRODUCT
+// =====================================================
 
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch product",
-    });
-  }
-};
+const getProductById =
+  async (req, res) => {
+    try {
+      const product =
+        await Product.findById(
+          req.params.id
+        );
 
-// POST /api/products
-const createProduct = async (req, res) => {
-  try {
-    const product = await Product.create(req.body);
-
-    res.status(201).json({
-      success: true,
-      message: "Product created successfully",
-      product,
-    });
-  } catch (error) {
-    console.error("Create product error:", error.message);
-
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-// PUT /api/products/:id
-const updateProduct = async (req, res) => {
-  try {
-    const product = await Product.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      {
-        new: true,
-        runValidators: true,
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Product not found",
+        });
       }
-    );
 
-    if (!product) {
-      return res.status(404).json({
+      return res.status(200).json({
+        success: true,
+        product,
+      });
+    } catch (error) {
+      console.error(
+        "Get product error:",
+        error.message
+      );
+
+      return res.status(500).json({
         success: false,
-        message: "Product not found",
+        message:
+          "Failed to fetch product",
       });
     }
+  };
 
-    res.status(200).json({
-      success: true,
-      message: "Product updated successfully",
-      product,
-    });
-  } catch (error) {
-    console.error("Update product error:", error.message);
+// =====================================================
+// NORMALIZE CATEGORY
+// =====================================================
 
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+const normalizeCategory = async (
+  category
+) => {
+  const value =
+    String(category || "")
+      .trim();
+
+  if (!value) {
+    return "";
   }
-};
- 
-// PATCH /api/products/:id/status
-const updateProductStatus = async (req, res) => {
-  try {
-    const { isActive } = req.body;
 
-    if (typeof isActive !== "boolean") {
+  const lower =
+    value.toLowerCase();
+
+  const categoryDoc =
+    await Category.findOne({
+      $or: [
+        { slug: lower },
+        { title: value },
+      ],
+    });
+
+  if (!categoryDoc) {
+    throw new Error(
+      "Selected category does not exist"
+    );
+  }
+
+  if (categoryDoc.isActive === false) {
+    throw new Error(
+      "Selected category is muted"
+    );
+  }
+
+  // ALWAYS save slug
+  return categoryDoc.slug;
+};
+
+// =====================================================
+// CREATE PRODUCT
+// =====================================================
+
+const createProduct =
+  async (req, res) => {
+    try {
+      const payload = {
+        ...req.body,
+      };
+
+      payload._id =
+        String(
+          payload._id || ""
+        ).trim();
+
+      payload.name =
+        String(
+          payload.name || ""
+        ).trim();
+
+      payload.category =
+        await normalizeCategory(
+          payload.category
+        );
+
+      if (
+        !payload._id ||
+        !payload.name ||
+        !payload.category
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Product ID, name and category are required",
+        });
+      }
+
+      const existing =
+        await Product.findOne({
+          _id: payload._id,
+        });
+
+      if (existing) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "A product with this ID already exists",
+        });
+      }
+
+      const product =
+        await Product.create(
+          payload
+        );
+
+      return res.status(201).json({
+        success: true,
+        message:
+          "Product created successfully",
+        product,
+      });
+    } catch (error) {
+      console.error(
+        "Create product error:",
+        error.message
+      );
+
       return res.status(400).json({
         success: false,
-        message: "isActive must be true or false",
+        message:
+          error.message ||
+          "Failed to create product",
       });
     }
+  };
 
-    const product = await Product.findByIdAndUpdate(
-      req.params.id,
-      { isActive },
-      {
-        new: true,
-        runValidators: true,
+// =====================================================
+// UPDATE PRODUCT
+//
+// Supports Product ID editing.
+//
+// MongoDB _id cannot be changed directly.
+// Therefore when ID changes:
+// 1. create replacement document
+// 2. delete old document
+// =====================================================
+
+const updateProduct =
+  async (req, res) => {
+    try {
+      const oldId =
+        req.params.id;
+
+      const current =
+        await Product.findById(
+          oldId
+        );
+
+      if (!current) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Product not found",
+        });
       }
-    );
 
-    if (!product) {
-      return res.status(404).json({
+      const payload = {
+        ...req.body,
+      };
+
+      const requestedId =
+        String(
+          payload._id ??
+            oldId
+        ).trim();
+
+      delete payload._id;
+
+      payload.category =
+        await normalizeCategory(
+          payload.category ??
+            current.category
+        );
+
+      // Same ID → normal update
+      if (requestedId === oldId) {
+        const product =
+          await Product.findByIdAndUpdate(
+            oldId,
+            payload,
+            {
+              new: true,
+              runValidators: true,
+            }
+          );
+
+        return res.status(200).json({
+          success: true,
+          message:
+            "Product updated successfully",
+          product,
+        });
+      }
+
+      // New ID already exists
+      const duplicate =
+        await Product.findById(
+          requestedId
+        );
+
+      if (duplicate) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "Another product already uses this ID",
+        });
+      }
+
+      // Create replacement
+      const replacement =
+        await Product.create({
+          ...current.toObject(),
+          ...payload,
+          _id: requestedId,
+          category:
+            payload.category,
+        });
+
+      // Delete old
+      await Product.findByIdAndDelete(
+        oldId
+      );
+
+      return res.status(200).json({
+        success: true,
+        message:
+          "Product ID and product updated successfully",
+        product: replacement,
+      });
+    } catch (error) {
+      console.error(
+        "Update product error:",
+        error.message
+      );
+
+      return res.status(400).json({
         success: false,
-        message: "Product not found",
+        message:
+          error.message ||
+          "Failed to update product",
       });
     }
+  };
 
-    res.status(200).json({
-      success: true,
-      message: isActive
-        ? "Product activated successfully"
-        : "Product muted successfully",
-      product,
-    });
-  } catch (error) {
-    console.error(
-      "Update product status error:",
-      error.message
-    );
+// =====================================================
+// MUTE / UNMUTE
+// =====================================================
 
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-// DELETE /api/products/:id
-const deleteProduct = async (req, res) => {
-  try {
-    const product = await Product.findByIdAndDelete(req.params.id);
+const updateProductStatus =
+  async (req, res) => {
+    try {
+      const { isActive } =
+        req.body;
 
-    if (!product) {
-      return res.status(404).json({
+      if (
+        typeof isActive !==
+        "boolean"
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "isActive must be true or false",
+        });
+      }
+
+      const product =
+        await Product.findByIdAndUpdate(
+          req.params.id,
+          {
+            isActive,
+          },
+          {
+            new: true,
+            runValidators: true,
+          }
+        );
+
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Product not found",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: isActive
+          ? "Product activated successfully"
+          : "Product muted successfully",
+        product,
+      });
+    } catch (error) {
+      console.error(
+        "Update product status error:",
+        error.message
+      );
+
+      return res.status(400).json({
         success: false,
-        message: "Product not found",
+        message:
+          error.message ||
+          "Failed to update product status",
       });
     }
+  };
 
-    res.status(200).json({
-      success: true,
-      message: "Product deleted successfully",
-    });
-  } catch (error) {
-    console.error("Delete product error:", error.message);
+// =====================================================
+// DELETE
+// =====================================================
 
-    res.status(500).json({
-      success: false,
-      message: "Failed to delete product",
-    });
-  }
-};
+const deleteProduct =
+  async (req, res) => {
+    try {
+      const product =
+        await Product.findByIdAndDelete(
+          req.params.id
+        );
+
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Product not found",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message:
+          "Product deleted successfully",
+      });
+    } catch (error) {
+      console.error(
+        "Delete product error:",
+        error.message
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Failed to delete product",
+      });
+    }
+  };
 
 module.exports = {
   getProducts,
@@ -236,6 +510,6 @@ module.exports = {
   getProductById,
   createProduct,
   updateProduct,
-  deleteProduct,
   updateProductStatus,
+  deleteProduct,
 };

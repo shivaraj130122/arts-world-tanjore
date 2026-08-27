@@ -6,8 +6,8 @@ const {
   getProductById,
   createProduct,
   updateProduct,
-  deleteProduct,
   updateProductStatus,
+  deleteProduct,
 } = require("../controllers/productController");
 
 const {
@@ -15,12 +15,13 @@ const {
   adminOnly,
 } = require("../middleware/authMiddleware");
 
-const router = express.Router();
+const router =
+  express.Router();
 
-// Public product routes
-router.get("/", getProducts);
+// =====================================================
+// ADMIN
+// =====================================================
 
-// Admin product list - includes active + muted products
 router.get(
   "/admin/all",
   protect,
@@ -28,15 +29,13 @@ router.get(
   getAdminProducts
 );
 
-router.get("/:id", getProductById);
-
-// Admin-only product management
 router.post(
   "/",
   protect,
   adminOnly,
   createProduct
 );
+
 router.put(
   "/:id",
   protect,
@@ -50,11 +49,26 @@ router.patch(
   adminOnly,
   updateProductStatus
 );
+
 router.delete(
   "/:id",
   protect,
   adminOnly,
   deleteProduct
+);
+
+// =====================================================
+// PUBLIC
+// =====================================================
+
+router.get(
+  "/",
+  getProducts
+);
+
+router.get(
+  "/:id",
+  getProductById
 );
 
 module.exports = router;

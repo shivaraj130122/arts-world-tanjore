@@ -1,12 +1,17 @@
 const Category = require("../models/Category");
+const Product = require("../models/Product");
+const Collection = require("../models/Collection");
 
-// GET /api/categories
-// GET /api/categories
-// Public categories — only ACTIVE categories are shown
+// =====================================================
+// GET ALL CATEGORIES
+// Public: active categories only
+// Admin can use /admin/all
+// =====================================================
+
 const getCategories = async (req, res) => {
   try {
     const categories = await Category.find({
-      isActive: true,
+      isActive: { $ne: false },
     }).sort({
       title: 1,
     });
@@ -28,12 +33,45 @@ const getCategories = async (req, res) => {
     });
   }
 };
-// GET /api/categories/:slug
+
+// =====================================================
+// GET ALL CATEGORIES FOR ADMIN
+// Active + muted
+// =====================================================
+
+const getAdminCategories = async (req, res) => {
+  try {
+    const categories = await Category.find({}).sort({
+      title: 1,
+    });
+
+    return res.status(200).json({
+      success: true,
+      count: categories.length,
+      categories,
+    });
+  } catch (error) {
+    console.error(
+      "Get admin categories error:",
+      error.message
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch admin categories",
+    });
+  }
+};
+
+// =====================================================
+// GET CATEGORY BY SLUG
+// =====================================================
+
 const getCategoryBySlug = async (req, res) => {
   try {
     const category = await Category.findOne({
       slug: req.params.slug,
-      isActive: true,
+      isActive: { $ne: false },
     });
 
     if (!category) {
@@ -49,7 +87,7 @@ const getCategoryBySlug = async (req, res) => {
     });
   } catch (error) {
     console.error(
-      "Get category error:",
+      "Get category by slug error:",
       error.message
     );
 
@@ -60,7 +98,10 @@ const getCategoryBySlug = async (req, res) => {
   }
 };
 
-// POST /api/categories
+// =====================================================
+// CREATE CATEGORY
+// =====================================================
+
 const createCategory = async (req, res) => {
   try {
     const {
@@ -73,27 +114,27 @@ const createCategory = async (req, res) => {
       isActive,
     } = req.body;
 
+    const normalizedId = String(_id || "").trim();
+    const normalizedTitle = String(title || "").trim();
+    const normalizedSlug = String(slug || "")
+      .trim()
+      .toLowerCase();
+
     if (
-      !_id ||
-      !title ||
-      !description ||
-      !slug
+      !normalizedId ||
+      !normalizedTitle ||
+      !normalizedSlug
     ) {
       return res.status(400).json({
         success: false,
-        message:
-          "ID, title, description and slug are required",
+        message: "ID, title and slug are required",
       });
     }
-
-    const normalizedSlug = slug
-      .trim()
-      .toLowerCase();
 
     const existingCategory =
       await Category.findOne({
         $or: [
-          { _id: String(_id).trim() },
+          { _id: normalizedId },
           { slug: normalizedSlug },
         ],
       });
@@ -108,26 +149,20 @@ const createCategory = async (req, res) => {
 
     const category =
       await Category.create({
-        _id: String(_id).trim(),
-        title: String(title).trim(),
+        _id: normalizedId,
+        title: normalizedTitle,
         description: String(
-          description
+          description || ""
         ).trim(),
         slug: normalizedSlug,
-        itemCount: Number(
-          itemCount ?? 0
-        ),
-        image: String(
-          image ?? ""
-        ).trim(),
-        isActive:
-          isActive !== false,
+        itemCount: Number(itemCount || 0),
+        image: String(image || "").trim(),
+        isActive: isActive !== false,
       });
 
     return res.status(201).json({
       success: true,
-      message:
-        "Category created successfully",
+      message: "Category created successfully",
       category,
     });
   } catch (error) {
@@ -145,11 +180,27 @@ const createCategory = async (req, res) => {
   }
 };
 
-// PUT /api/categories/:id
+// =====================================================
+// UPDATE CATEGORY
+//
+// IMPORTANT:
+// If slug changes, all products using the old slug
+// are moved to the new slug.
+// =====================================================
+
 const updateCategory = async (req, res) => {
   try {
-    const categoryId =
-      req.params.id;
+    const categoryId = req.params.id;
+
+    const currentCategory =
+      await Category.findById(categoryId);
+
+    if (!currentCategory) {
+      return res.status(404).json({
+        success: false,
+        message: "Category not found",
+      });
+    }
 
     const {
       title,
@@ -167,13 +218,9 @@ const updateCategory = async (req, res) => {
         String(title).trim();
     }
 
-    if (
-      description !== undefined
-    ) {
+    if (description !== undefined) {
       updateData.description =
-        String(
-          description
-        ).trim();
+        String(description || "").trim();
     }
 
     if (slug !== undefined) {
@@ -183,23 +230,40 @@ const updateCategory = async (req, res) => {
           .toLowerCase();
     }
 
-    if (
-      itemCount !== undefined
-    ) {
+    if (itemCount !== undefined) {
       updateData.itemCount =
-        Number(itemCount);
+        Number(itemCount || 0);
     }
 
     if (image !== undefined) {
       updateData.image =
-        String(image ?? "").trim();
+        String(image || "").trim();
     }
 
-    if (
-      isActive !== undefined
-    ) {
+    if (isActive !== undefined) {
       updateData.isActive =
         Boolean(isActive);
+    }
+
+    const oldSlug = currentCategory.slug;
+    const newSlug =
+      updateData.slug || oldSlug;
+
+    // Prevent duplicate slug
+    if (newSlug !== oldSlug) {
+      const duplicate =
+        await Category.findOne({
+          slug: newSlug,
+          _id: { $ne: categoryId },
+        });
+
+      if (duplicate) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "Another category already uses this slug",
+        });
+      }
     }
 
     const category =
@@ -212,18 +276,46 @@ const updateCategory = async (req, res) => {
         }
       );
 
-    if (!category) {
-      return res.status(404).json({
-        success: false,
-        message:
-          "Category not found",
-      });
+    // =================================================
+    // Keep products connected when category slug changes
+    // =================================================
+
+    if (newSlug !== oldSlug) {
+      await Product.updateMany(
+        {
+          $or: [
+            { category: oldSlug },
+            { category: currentCategory.title },
+          ],
+        },
+        {
+          $set: {
+            category: newSlug,
+          },
+        }
+      );
+
+      // Collections using this category also follow
+      if (Collection) {
+        await Collection.updateMany(
+          {
+            $or: [
+              { category: oldSlug },
+              { category: currentCategory.title },
+            ],
+          },
+          {
+            $set: {
+              category: newSlug,
+            },
+          }
+        );
+      }
     }
 
     return res.status(200).json({
       success: true,
-      message:
-        "Category updated successfully",
+      message: "Category updated successfully",
       category,
     });
   } catch (error) {
@@ -241,8 +333,14 @@ const updateCategory = async (req, res) => {
   }
 };
 
-// PATCH /api/categories/:id/status
-const updateCategoryStatus = async (req, res) => {
+// =====================================================
+// MUTE / UNMUTE CATEGORY
+// =====================================================
+
+const updateCategoryStatus = async (
+  req,
+  res
+) => {
   try {
     const { isActive } = req.body;
 
@@ -293,11 +391,12 @@ const updateCategoryStatus = async (req, res) => {
     });
   }
 };
-// DELETE /api/categories/:id
-const deleteCategory = async (
-  req,
-  res
-) => {
+
+// =====================================================
+// DELETE CATEGORY
+// =====================================================
+
+const deleteCategory = async (req, res) => {
   try {
     const category =
       await Category.findByIdAndDelete(
@@ -307,15 +406,13 @@ const deleteCategory = async (
     if (!category) {
       return res.status(404).json({
         success: false,
-        message:
-          "Category not found",
+        message: "Category not found",
       });
     }
 
     return res.status(200).json({
       success: true,
-      message:
-        "Category deleted successfully",
+      message: "Category deleted successfully",
     });
   } catch (error) {
     console.error(
@@ -331,35 +428,9 @@ const deleteCategory = async (
   }
 };
 
-// GET /api/categories/admin/all
-// Admin only — returns ACTIVE and MUTED categories
-const getAllCategoriesAdmin = async (req, res) => {
-  try {
-    const categories = await Category.find().sort({
-      title: 1,
-    });
-
-    return res.status(200).json({
-      success: true,
-      count: categories.length,
-      categories,
-    });
-  } catch (error) {
-    console.error(
-      "Get admin categories error:",
-      error.message
-    );
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch admin categories",
-    });
-  }
-};
-
 module.exports = {
   getCategories,
-  getAllCategoriesAdmin,
+  getAdminCategories,
   getCategoryBySlug,
   createCategory,
   updateCategory,

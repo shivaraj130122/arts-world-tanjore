@@ -17,6 +17,7 @@ import {
   deleteCollection,
 } from "../services/collectionService";
 import { uploadImage } from "../services/uploadService";
+import { getAllCategoriesAdmin } from "../services/categoryService";
 
 const EMPTY_COLLECTION = {
   _id: "",
@@ -31,6 +32,9 @@ const EMPTY_COLLECTION = {
 
 const AdminCollections = () => {
   const [collections, setCollections] =
+    useState([]);
+
+  const [categories, setCategories] =
     useState([]);
 
   const [isLoading, setIsLoading] =
@@ -57,24 +61,33 @@ const AdminCollections = () => {
 
     const loadInitialCollections = async () => {
       try {
-        const data =
-          await getAllCollectionsAdmin();
+        const [collectionsData, categoriesData] =
+          await Promise.all([
+            getAllCollectionsAdmin(),
+            getAllCategoriesAdmin(),
+          ]);
 
         if (!cancelled) {
           setCollections(
-            data.collections || []
+            collectionsData.collections || []
+          );
+
+          setCategories(
+            (categoriesData.categories || []).filter(
+              (category) => category.isActive !== false
+            )
           );
         }
       } catch (error) {
         if (!cancelled) {
           console.error(
-            "Load collections error:",
+            "Load collections/categories error:",
             error
           );
 
           toast.error(
-            error.message ||
-              "Unable to load collections"
+            error?.message ||
+              "Unable to load collections and categories"
           );
         }
       } finally {
@@ -90,6 +103,23 @@ const AdminCollections = () => {
       cancelled = true;
     };
   }, []);
+
+  const loadCategories = async () => {
+    try {
+      const data = await getAllCategoriesAdmin();
+
+      setCategories(
+        (data.categories || []).filter(
+          (category) => category.isActive !== false
+        )
+      );
+    } catch (error) {
+      console.error(
+        "Load categories error:",
+        error
+      );
+    }
+  };
 
   const loadCollections = async () => {
     try {
@@ -220,9 +250,20 @@ const AdminCollections = () => {
         collection.image ?? ""
       ),
 
-      category: String(
-        collection.category ?? ""
-      ),
+      category: (() => {
+        const currentCategory = String(
+          collection.category ?? ""
+        ).trim();
+
+        const matchedCategory = categories.find(
+          (category) =>
+            category.slug === currentCategory ||
+            category.title === currentCategory ||
+            category._id === currentCategory
+        );
+
+        return matchedCategory?.slug || "";
+      })(),
 
       isActive:
         collection.isActive !==
@@ -337,6 +378,7 @@ const AdminCollections = () => {
       closeForm();
 
       await loadCollections();
+      await loadCategories();
     } catch (error) {
       console.error(
         "Save collection error:",
@@ -553,17 +595,29 @@ const handleToggleStatus = async (
                     Category
                   </label>
 
-                  <input
+                  <select
                     name="category"
-                    value={
-                      form.category
-                    }
-                    onChange={
-                      handleChange
-                    }
-                    placeholder="Tanjore Paintings"
-                    className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
-                  />
+                    value={form.category || ""}
+                    onChange={handleChange}
+                    className="w-full rounded-lg border border-primary/20 bg-white px-4 py-2.5 text-sm outline-none focus:border-primary"
+                  >
+                    <option value="">
+                      No category
+                    </option>
+
+                    {categories.map((category) => (
+                      <option
+                        key={category._id}
+                        value={category.slug}
+                      >
+                        {category.title}
+                      </option>
+                    ))}
+                  </select>
+
+                  <p className="mt-1 text-xs text-text/50">
+                    Select a category. The category slug is stored automatically.
+                  </p>
                 </div>
 
                 {/* Sort Order */}

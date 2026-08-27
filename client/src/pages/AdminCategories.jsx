@@ -92,7 +92,7 @@ const AdminCategories = () => {
     try {
       setIsLoading(true);
 
-      const data = await getCategories();
+      const data = await getAllCategoriesAdmin();
 
       setCategories(data.categories || []);
     } catch (error) {

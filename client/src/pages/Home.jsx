@@ -25,12 +25,16 @@ const Home = () => {
       <Categories />
       <FeaturedProducts />
       <NewArrivals />
+
+      {/* Requested five-section order */}
       <BestSellers />
-      <WhyChooseUs />
       <TanjoreHeritage />
-      <CustomOrderCTA />
-      <Testimonials />
       <InstagramGallery />
+      <WhyChooseUs />
+      <Testimonials />
+
+      {/* Remaining sections unchanged */}
+      <CustomOrderCTA />
       <Newsletter />
       <ContactCTA />
       <PublicSeoLinks />

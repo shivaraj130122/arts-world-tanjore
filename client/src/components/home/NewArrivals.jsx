@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
 import "swiper/css";
@@ -6,10 +7,34 @@ import "swiper/css/pagination";
 import Container from "../ui/Container";
 import SectionTitle from "../ui/SectionTitle";
 import ProductCard from "../product/ProductCard";
-import { newArrivals } from "../../constants/products";
+import { getProducts } from "../../services/productService";
 
 const NewArrivals = () => {
-  if (newArrivals.length === 0) return null;
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadProducts = async () => {
+      try {
+        const data = await getProducts({ newArrival: "true" });
+        if (!cancelled) {
+          setProducts(Array.isArray(data?.products) ? data.products : []);
+        }
+      } catch (error) {
+        console.error("Load new arrival homepage products error:", error);
+        if (!cancelled) setProducts([]);
+      }
+    };
+
+    loadProducts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (products.length === 0) return null;
 
   return (
     <section className="section-y bg-white">
@@ -36,7 +61,7 @@ const NewArrivals = () => {
             }}
             className="!pb-12"
           >
-            {newArrivals.map((product) => (
+            {products.map((product) => (
               <SwiperSlide key={product._id}>
                 <ProductCard product={product} />
               </SwiperSlide>
@@ -45,7 +70,6 @@ const NewArrivals = () => {
         </div>
       </Container>
 
-      {/* Scoped overrides so Swiper's default nav/pagination match the theme */}
       <style>{`
         .new-arrivals-swiper .swiper-button-next,
         .new-arrivals-swiper .swiper-button-prev {

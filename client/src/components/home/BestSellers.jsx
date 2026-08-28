@@ -1,8 +1,9 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Container from "../ui/Container";
 import SectionTitle from "../ui/SectionTitle";
 import ProductCard from "../product/ProductCard";
-import { bestSellers } from "../../constants/products";
+import { getProducts } from "../../services/productService";
 
 const cardVariants = {
   hidden: { opacity: 0, scale: 0.95 },
@@ -14,6 +15,32 @@ const cardVariants = {
 };
 
 const BestSellers = () => {
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadProducts = async () => {
+      try {
+        const data = await getProducts({ bestSeller: "true" });
+        if (!cancelled) {
+          setProducts(Array.isArray(data?.products) ? data.products : []);
+        }
+      } catch (error) {
+        console.error("Load best seller homepage products error:", error);
+        if (!cancelled) setProducts([]);
+      }
+    };
+
+    loadProducts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (products.length === 0) return null;
+
   return (
     <section className="section-y">
       <Container>
@@ -24,7 +51,7 @@ const BestSellers = () => {
         />
 
         <div className="mt-12 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
-          {bestSellers.map((product, i) => (
+          {products.map((product, i) => (
             <motion.div
               key={product._id}
               custom={i}

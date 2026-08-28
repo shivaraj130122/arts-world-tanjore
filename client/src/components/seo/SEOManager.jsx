@@ -42,6 +42,7 @@ const upsertMeta = (attribute, name, content) => {
 
   if (!element) {
     element = document.createElement("meta");
+    element.setAttribute("attribute", attribute);
     element.setAttribute(attribute, name);
     document.head.appendChild(element);
   }
@@ -58,7 +59,8 @@ export const setSEO = ({
   type = "website",
 }) => {
   const safeTitle = title || DEFAULT_SEO.title;
-  const safeDescription = description || DEFAULT_SEO.description;
+  const safeDescription =
+    description || DEFAULT_SEO.description;
   const safeCanonical = canonicalUrl || SITE_URL;
 
   document.title = safeTitle;
@@ -98,14 +100,26 @@ const SEOManager = () => {
   const { pathname } = useLocation();
 
   useEffect(() => {
+    /*
+     * ProductDetails owns SEO for /product/:id because it must wait for
+     * the product API response before setting the product-specific title,
+     * description, canonical URL and image.
+     *
+     * React effects in nested components can run before parent effects.
+     * Therefore SEOManager must NOT overwrite product metadata after
+     * ProductDetails has set it.
+     */
+    if (pathname.startsWith("/product/")) {
+      return;
+    }
+
     const seo = SEO_BY_PATH[pathname] || DEFAULT_SEO;
 
-    const canonicalUrl =
-      SEO_BY_PATH[pathname]
-        ? pathname === "/"
-          ? SITE_URL
-          : `${SITE_URL}${pathname}`
-        : SITE_URL;
+    const canonicalUrl = SEO_BY_PATH[pathname]
+      ? pathname === "/"
+        ? SITE_URL
+        : `${SITE_URL}${pathname}`
+      : SITE_URL;
 
     setSEO({
       title: seo.title,

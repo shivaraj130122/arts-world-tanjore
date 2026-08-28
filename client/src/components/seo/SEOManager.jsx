@@ -53,6 +53,19 @@ const DEFAULT_SEO = {
     "Bhavani's Art World showcases handcrafted Tanjore paintings, custom artwork, and unique handmade creations.",
 };
 
+const PRIVATE_ROUTES = new Set([
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+  "/profile",
+  "/cart",
+  "/checkout",
+  "/wishlist",
+]);
+
+const setRobots = (value) => upsertMeta("name", "robots", value);
+
 const cleanText = (value, fallback = "") =>
   String(value ?? fallback).replace(/\s+/g, " ").trim();
 
@@ -106,6 +119,7 @@ export const setSEO = ({
   image = DEFAULT_IMAGE,
   imageAlt = "Bhavani's Art World",
   type = "website",
+  robots = "index, follow",
 }) => {
   const safeTitle = title || DEFAULT_SEO.title;
   const safeDescription = description || DEFAULT_SEO.description;
@@ -113,7 +127,7 @@ export const setSEO = ({
 
   document.title = safeTitle;
   upsertMeta("name", "description", safeDescription);
-  upsertMeta("name", "robots", "index, follow");
+  setRobots(robots);
   upsertMeta("property", "og:type", type);
   upsertMeta("property", "og:title", safeTitle);
   upsertMeta("property", "og:description", safeDescription);
@@ -182,9 +196,50 @@ const SEOManager = () => {
     const applySEO = async () => {
       setGlobalStructuredData();
 
+      if (PRIVATE_ROUTES.has(pathname) || pathname.startsWith("/admin")) {
+        const privateTitle = pathname.startsWith("/admin")
+          ? "Admin | Bhavani's Art World"
+          : "Bhavani's Art World";
+        setSEO({
+          title: privateTitle,
+          description: "Private page of Bhavani's Art World.",
+          canonicalUrl: SITE_URL,
+          robots: "noindex, nofollow, noarchive",
+        });
+        removeJsonLd("breadcrumbs");
+        removeJsonLd("collection-list");
+        removeJsonLd("webpage");
+        return;
+      }
+
       if (pathname === "/shop") {
         const params = new URLSearchParams(search);
         const categorySlug = cleanText(params.get("category"));
+        const hasSearchQuery = Boolean(cleanText(params.get("search")));
+        const hasSortQuery = Boolean(cleanText(params.get("sort")));
+
+        // Search/sort result URLs are useful for users but should not become
+        // separate Google index entries. Category landing URLs remain indexable.
+        if (!categorySlug && (hasSearchQuery || hasSortQuery)) {
+          const seo = STATIC_SEO["/shop"];
+          setSEO({
+            title: seo.title,
+            description: seo.description,
+            canonicalUrl: `${SITE_URL}/shop`,
+            robots: "noindex, follow, noarchive",
+          });
+          setPageStructuredData({
+            title: seo.title,
+            description: seo.description,
+            canonicalUrl: `${SITE_URL}/shop`,
+          });
+          setBreadcrumbStructuredData([
+            { name: "Home", url: SITE_URL },
+            { name: "Shop", url: `${SITE_URL}/shop` },
+          ]);
+          removeJsonLd("collection-list");
+          return;
+        }
 
         if (categorySlug) {
           const fallbackName = toSlugTitle(categorySlug);

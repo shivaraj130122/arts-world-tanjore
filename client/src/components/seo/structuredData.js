@@ -23,10 +23,7 @@ export const createOrganizationSchema = () => ({
   "@id": `${SITE_URL}/#organization`,
   name: SITE_NAME,
   url: SITE_URL,
-  logo: {
-    "@type": "ImageObject",
-    url: `${SITE_URL}/og-image.png`,
-  },
+  logo: { "@type": "ImageObject", url: `${SITE_URL}/og-image.png` },
 });
 
 export const createWebsiteSchema = () => ({
@@ -35,35 +32,20 @@ export const createWebsiteSchema = () => ({
   "@id": `${SITE_URL}/#website`,
   name: SITE_NAME,
   url: SITE_URL,
-  description:
-    "Handcrafted Tanjore paintings, traditional Indian art, custom artwork, and unique handmade creations.",
-  publisher: {
-    "@id": `${SITE_URL}/#organization`,
-  },
+  description: "Handcrafted Tanjore paintings, traditional Indian art, custom artwork, and unique handmade creations.",
+  publisher: { "@id": `${SITE_URL}/#organization` },
 });
 
-export const createWebPageSchema = ({
-  name,
-  description,
-  url,
-  image = DEFAULT_IMAGE,
-}) => ({
+export const createWebPageSchema = ({ name, description, url, image = DEFAULT_IMAGE }) => ({
   "@context": "https://schema.org",
   "@type": "WebPage",
   "@id": `${url}#webpage`,
   name: clean(name, SITE_NAME),
   description: clean(description),
   url,
-  isPartOf: {
-    "@id": `${SITE_URL}/#website`,
-  },
-  about: {
-    "@id": `${SITE_URL}/#organization`,
-  },
-  primaryImageOfPage: {
-    "@type": "ImageObject",
-    url: absoluteUrl(image),
-  },
+  isPartOf: { "@id": `${SITE_URL}/#website` },
+  about: { "@id": `${SITE_URL}/#organization` },
+  primaryImageOfPage: { "@type": "ImageObject", url: absoluteUrl(image) },
 });
 
 export const createBreadcrumbSchema = (items) => ({
@@ -77,23 +59,16 @@ export const createBreadcrumbSchema = (items) => ({
   })),
 });
 
-const getAvailability = (product) => {
-  if (product?.stock === "out-of-stock" || Number(product?.stockCount) <= 0) {
-    return "https://schema.org/OutOfStock";
-  }
-
-  return "https://schema.org/InStock";
-};
+const getAvailability = (product) =>
+  product?.stock === "out-of-stock" || Number(product?.stockCount) <= 0
+    ? "https://schema.org/OutOfStock"
+    : "https://schema.org/InStock";
 
 export const createProductSchema = ({ product, url }) => {
   const name = clean(product?.name, "Handcrafted Artwork");
   const description = clean(product?.description, `${name} from ${SITE_NAME}.`);
-  const images = [
-    ...(Array.isArray(product?.images) ? product.images : []),
-    product?.image,
-  ]
-    .filter(Boolean)
-    .map((image) => absoluteUrl(image))
+  const images = [...(Array.isArray(product?.images) ? product.images : []), product?.image]
+    .filter(Boolean).map((image) => absoluteUrl(image))
     .filter((image, index, list) => list.indexOf(image) === index);
 
   const schema = {
@@ -105,10 +80,7 @@ export const createProductSchema = ({ product, url }) => {
     url,
     image: images.length ? images : [DEFAULT_IMAGE],
     sku: clean(product?.sku),
-    brand: {
-      "@type": "Brand",
-      name: SITE_NAME,
-    },
+    brand: { "@type": "Brand", name: SITE_NAME },
     category: clean(product?.category),
     material: clean(product?.material) || undefined,
     color: clean(product?.style) || undefined,
@@ -132,9 +104,7 @@ export const createProductSchema = ({ product, url }) => {
     };
   }
 
-  return Object.fromEntries(
-    Object.entries(schema).filter(([, value]) => value !== undefined && value !== "")
-  );
+  return Object.fromEntries(Object.entries(schema).filter(([, value]) => value !== undefined && value !== ""));
 };
 
 export const createItemListSchema = ({ name, url, items }) => ({
@@ -147,6 +117,6 @@ export const createItemListSchema = ({ name, url, items }) => ({
     "@type": "ListItem",
     position: index + 1,
     name: clean(item.name, "Artwork"),
-    url: item.url,
+    ...(item.url ? { url: item.url } : {}),
   })),
 });

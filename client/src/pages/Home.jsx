@@ -11,6 +11,7 @@ import Testimonials from "../components/home/Testimonials";
 import InstagramGallery from "../components/home/InstagramGallery";
 import Newsletter from "../components/home/Newsletter";
 import ContactCTA from "../components/home/ContactCTA";
+import PublicSeoLinks from "../components/seo/PublicSeoLinks";
 
 // Premium homepage for Bhavani's Art World — composed entirely from
 // components/home/*. Each section is self-contained (owns its own data +
@@ -31,6 +32,7 @@ const Home = () => {
       <InstagramGallery />
       <Newsletter />
       <ContactCTA />
+      <PublicSeoLinks />
     </div>
   );
 };

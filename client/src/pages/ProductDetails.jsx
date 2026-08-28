@@ -13,7 +13,10 @@ import RelatedProducts from "../components/product/RelatedProducts";
 
 import { getProductById } from "../services/productService";
 import { setSEO } from "../components/seo/SEOManager";
-import { createBreadcrumbSchema, createProductSchema } from "../components/seo/structuredData";
+import {
+  createBreadcrumbSchema,
+  createProductSchema,
+} from "../components/seo/structuredData";
 import { useCart } from "../hooks/useCart";
 import { useWishlist } from "../hooks/useWishlist";
 
@@ -67,6 +70,21 @@ const ProductLoading = () => (
     </div>
   </Container>
 );
+
+const upsertJsonLd = (id, data) => {
+  let script = document.head.querySelector(`script[data-seo-jsonld="${id}"]`);
+  if (!script) {
+    script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.setAttribute("data-seo-jsonld", id);
+    document.head.appendChild(script);
+  }
+  script.textContent = JSON.stringify(data);
+};
+
+const removeJsonLd = (id) => {
+  document.head.querySelector(`script[data-seo-jsonld="${id}"]`)?.remove();
+};
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -129,58 +147,34 @@ const ProductDetails = () => {
       product.image ||
       (Array.isArray(product.images) ? product.images[0] : null);
 
+    const canonicalUrl = `${SITE_URL}/product/${encodeURIComponent(product._id || id)}`;
+
     setSEO({
       title: `${productTitle} | Bhavani's Art World`,
       description: productDescription,
-      canonicalUrl: `${SITE_URL}/product/${encodeURIComponent(product._id || id)}`,
+      canonicalUrl,
       image: productImage || undefined,
       imageAlt: productTitle,
       type: "product",
     });
 
-    const productUrl = `${SITE_URL}/product/${encodeURIComponent(product._id || id)}`;
-    const categorySlug = product.category
-      ? String(product.category)
-          .toLowerCase()
-          .trim()
-          .replace(/\s+&\s+/g, "-")
-          .replace(/\s+/g, "-")
-      : null;
-
-    const breadcrumbItems = [
+    upsertJsonLd("product", createProductSchema({ product, url: canonicalUrl }));
+    upsertJsonLd("product-breadcrumbs", createBreadcrumbSchema([
       { name: "Home", url: SITE_URL },
       { name: "Shop", url: `${SITE_URL}/shop` },
-    ];
+      ...(product.category ? [{
+        name: product.category,
+        url: `${SITE_URL}/shop?category=${encodeURIComponent(
+          String(product.category).toLowerCase().replace(/\s+&\s+/g, "-").replace(/\s+/g, "-")
+        )}`,
+      }] : []),
+      { name: productTitle, url: canonicalUrl },
+    ]));
 
-    if (categorySlug) {
-      breadcrumbItems.push({
-        name: String(product.category).trim(),
-        url: `${SITE_URL}/shop?category=${encodeURIComponent(categorySlug)}`,
-      });
-    }
-
-    breadcrumbItems.push({ name: productTitle, url: productUrl });
-
-    let productSchema = createProductSchema({ product, url: productUrl });
-    let breadcrumbSchema = createBreadcrumbSchema(breadcrumbItems);
-
-    let productScript = document.head.querySelector('script[data-seo-jsonld="product"]');
-    if (!productScript) {
-      productScript = document.createElement("script");
-      productScript.type = "application/ld+json";
-      productScript.setAttribute("data-seo-jsonld", "product");
-      document.head.appendChild(productScript);
-    }
-    productScript.textContent = JSON.stringify(productSchema);
-
-    let breadcrumbScript = document.head.querySelector('script[data-seo-jsonld="product-breadcrumbs"]');
-    if (!breadcrumbScript) {
-      breadcrumbScript = document.createElement("script");
-      breadcrumbScript.type = "application/ld+json";
-      breadcrumbScript.setAttribute("data-seo-jsonld", "product-breadcrumbs");
-      document.head.appendChild(breadcrumbScript);
-    }
-    breadcrumbScript.textContent = JSON.stringify(breadcrumbSchema);
+    return () => {
+      removeJsonLd("product");
+      removeJsonLd("product-breadcrumbs");
+    };
   }, [product, id]);
 
   if (isLoading) {

@@ -75,6 +75,14 @@ const Footer = () => {
               </li>
             ))}
           </ul>
+          <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2">
+            <Link to="/collections" className="text-sm text-background/70 transition hover:text-secondary">
+              Collections
+            </Link>
+            <Link to="/custom-orders" className="text-sm text-background/70 transition hover:text-secondary">
+              Custom Orders
+            </Link>
+          </div>
         </div>
 
         {/* Categories */}

@@ -1,7 +1,12 @@
 User-agent: *
 Allow: /
+
+# Keep private/admin areas out of search results.
 Disallow: /admin
 Disallow: /login
-Disallow: /register
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /profile
 
 Sitemap: https://bhavani-art-world.onrender.com/sitemap.xml

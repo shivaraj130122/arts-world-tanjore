@@ -26,6 +26,25 @@ export const createOrganizationSchema = () => ({
   logo: { "@type": "ImageObject", url: `${SITE_URL}/og-image.png` },
 });
 
+
+export const createLocalBusinessSchema = () => ({
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "@id": `${SITE_URL}/#local-business`,
+  name: SITE_NAME,
+  url: SITE_URL,
+  image: DEFAULT_IMAGE,
+  telephone: "+91 9880556398",
+  email: "shiva130122@gmail.com",
+  address: {
+    "@type": "PostalAddress",
+    addressLocality: "Bengaluru",
+    addressRegion: "Karnataka",
+    addressCountry: "IN",
+  },
+  sameAs: ["https://instagram.com/tanjore_artby_bhavani"],
+});
+
 export const createWebsiteSchema = () => ({
   "@context": "https://schema.org",
   "@type": "WebSite",

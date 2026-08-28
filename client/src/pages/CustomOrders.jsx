@@ -10,6 +10,7 @@ import CustomOrderForm from "../components/custom-orders/CustomOrderForm";
 import CustomOrderOptions from "../components/custom-orders/CustomOrderOptions";
 import CustomOrderBenefits from "../components/custom-orders/CustomOrderBenefits";
 import CustomOrderFAQ from "../components/custom-orders/CustomOrderFAQ";
+import { PageSearchContent } from "../components/seo/SearchLandingContent";
 import { CONTACT_INFO } from "../constants";
 
 // CustomOrders.jsx stays a thin page-level composition — each section owns
@@ -48,6 +49,18 @@ const CustomOrders = () => {
       </Container>
 
       <CustomOrderFAQ />
+
+      <PageSearchContent
+        title="Custom Tanjore Paintings & Personalized Artwork"
+        links={[
+          { to: "/shop?category=tanjore-paintings", label: "Browse Tanjore Paintings" },
+          { to: "/shop?category=blouse-painting", label: "Blouse Paintings" },
+          { to: "/shop?category=saree-border-painting", label: "Saree Border Paintings" },
+          { to: "/contact", label: "Contact Bhavani&apos;s Art World" },
+        ]}
+      >
+        Request a personalized creation for a meaningful memory, celebration or gifting occasion. Custom options include Tanjore paintings, portraits, fabric or blouse painting, saree border designs and personalized gift art.
+      </PageSearchContent>
 
       <Container className="section-y">
         <CTABanner

@@ -8,6 +8,7 @@ import ContactInfo from "../components/contact/ContactInfo";
 import ContactForm from "../components/contact/ContactForm";
 import LocationSection from "../components/contact/LocationSection";
 import ContactFAQ from "../components/contact/ContactFAQ";
+import { PageSearchContent } from "../components/seo/SearchLandingContent";
 import { CONTACT_INFO } from "../constants";
 
 // Contact.jsx stays a thin page-level composition — each section owns its
@@ -47,6 +48,17 @@ const Contact = () => {
 
       <LocationSection />
       <ContactFAQ />
+
+      <PageSearchContent
+        title="Contact Bhavani&apos;s Art World"
+        links={[
+          { to: "/shop", label: "Shop Artwork" },
+          { to: "/collections", label: "Explore Collections" },
+          { to: "/custom-orders", label: "Custom Artwork" },
+        ]}
+      >
+        Get in touch about Tanjore paintings, fabric paintings, saree border paintings, blouse paintings, handmade gifts, flower bouquets or a custom artwork request.
+      </PageSearchContent>
 
       <Container className="section-y">
         <CTABanner

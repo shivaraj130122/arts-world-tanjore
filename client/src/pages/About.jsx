@@ -9,6 +9,7 @@ import AboutCategories from "../components/about/AboutCategories";
 import CraftsmanshipProcess from "../components/about/CraftsmanshipProcess";
 import WhyUs from "../components/about/WhyUs";
 import CustomArtStory from "../components/about/CustomArtStory";
+import { PageSearchContent } from "../components/seo/SearchLandingContent";
 
 // About.jsx stays a thin page-level composition — each section owns its
 // own content and animation, this file only orders them.
@@ -32,6 +33,17 @@ const About = () => {
       <CraftsmanshipProcess />
       <WhyUs />
       <CustomArtStory />
+
+      <PageSearchContent
+        title="About Our Tanjore Art & Handmade Craftsmanship"
+        links={[
+          { to: "/shop?category=tanjore-paintings", label: "Shop Tanjore Paintings" },
+          { to: "/collections", label: "Explore Collections" },
+          { to: "/custom-orders", label: "Request Custom Artwork" },
+        ]}
+      >
+        Learn more about Bhavani&apos;s Art World and our focus on handcrafted Tanjore paintings, traditional Indian artistry, personalized artwork and handmade creations.
+      </PageSearchContent>
 
       <Container className="section-y">
         <CTABanner

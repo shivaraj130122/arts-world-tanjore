@@ -2,10 +2,13 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { getCategoryBySlug } from "../../services/categoryService";
 import { getCollections } from "../../services/collectionService";
+import { trackEvent } from "../../services/analytics";
+import { getCategorySeoContent } from "./seoContent";
 import {
   createBreadcrumbSchema,
   createItemListSchema,
   createOrganizationSchema,
+  createLocalBusinessSchema,
   createWebPageSchema,
   createWebsiteSchema,
   getSiteUrl,
@@ -21,14 +24,14 @@ const STATIC_SEO = {
       "Explore handcrafted Tanjore paintings, traditional Indian art, custom artwork, and unique handmade creations from Bhavani's Art World.",
   },
   "/shop": {
-    title: "Shop Tanjore Paintings & Handcrafted Art | Bhavani's Art World",
+    title: "Shop Tanjore Paintings & Handmade Art | Bhavani's Art World",
     description:
-      "Shop handcrafted Tanjore paintings, traditional Indian artwork, custom creations, and unique handmade products from Bhavani's Art World.",
+      "Shop Tanjore paintings, fabric paintings, saree border paintings, blouse paintings, handmade gifts and custom artwork from Bhavani's Art World.",
   },
   "/about": {
     title: "About Bhavani's Art World | Tanjore Art & Craftsmanship",
     description:
-      "Learn about Bhavani's Art World, our passion for Tanjore paintings, Indian craftsmanship, traditional artistry, and custom handmade creations.",
+      "Learn about Bhavani's Art World, our approach to Tanjore paintings, traditional Indian art, handmade crafts, and personalized artwork.",
   },
   "/collections": {
     title: "Art Collections | Bhavani's Art World",
@@ -148,6 +151,7 @@ export const setSEO = ({
 
 const setGlobalStructuredData = () => {
   upsertJsonLd("organization", createOrganizationSchema());
+  upsertJsonLd("local-business", createLocalBusinessSchema());
   upsertJsonLd("website", createWebsiteSchema());
 };
 
@@ -189,6 +193,14 @@ const SEOManager = () => {
   const { pathname, search } = useLocation();
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      trackEvent("page_view", {
+        page_path: `${pathname}${search}`,
+        page_location: window.location.href,
+        page_title: document.title,
+      });
+    }
+
     if (pathname.startsWith("/product/")) return;
 
     let cancelled = false;
@@ -250,21 +262,25 @@ const SEOManager = () => {
             if (cancelled) return;
             const category = data?.category || data?.data || data;
             const categoryName = cleanText(category?.title || category?.name, fallbackName);
+            const keywordContent = getCategorySeoContent(categorySlug);
             const categoryDescription = cleanText(
-              category?.description,
+              keywordContent?.intro || category?.description,
               `Explore ${categoryName} artwork and handcrafted creations from Bhavani's Art World.`
             ).slice(0, 160);
+            const categoryTitle = keywordContent
+              ? `${keywordContent.primary} | Bhavani's Art World`
+              : `${categoryName} | Shop | Bhavani's Art World`;
             const image = category?.image || DEFAULT_IMAGE;
 
             setSEO({
-              title: `${categoryName} | Shop | Bhavani's Art World`,
+              title: categoryTitle,
               description: categoryDescription,
               canonicalUrl,
               image,
               imageAlt: categoryName,
             });
             setPageStructuredData({
-              title: `${categoryName} | Shop | Bhavani's Art World`,
+              title: categoryTitle,
               description: categoryDescription,
               canonicalUrl,
               image,

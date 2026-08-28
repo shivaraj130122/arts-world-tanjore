@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { FiArrowRight, FiImage } from "react-icons/fi";
 
 import { getCollections } from "../services/collectionService";
+import { PageSearchContent } from "../components/seo/SearchLandingContent";
 
 const collectionVisuals = {
   "divine-art": {
@@ -127,6 +128,18 @@ const Collections = () => {
           creations, and thoughtful gifts.
         </p>
       </div>
+
+      <PageSearchContent
+        title="Explore Tanjore Paintings & Handmade Art Collections"
+        links={[
+          { to: "/shop?category=tanjore-paintings", label: "Tanjore Paintings" },
+          { to: "/shop?category=fabric-paintings", label: "Fabric Paintings" },
+          { to: "/shop?category=gifts-crafts", label: "Handmade Gifts & Crafts" },
+          { to: "/custom-orders", label: "Custom Artwork" },
+        ]}
+      >
+        Browse curated collections from Bhavani&apos;s Art World, including traditional Tanjore paintings, handmade fabric art, personalized creations and thoughtful gifts. Explore each collection to discover artwork that fits your home, celebration or gifting idea.
+      </PageSearchContent>
 
       {/* Loading */}
       {isLoading && <CollectionsLoading />}

@@ -18,6 +18,8 @@ import {
   createProductSchema,
 } from "../components/seo/structuredData";
 import { useCart } from "../hooks/useCart";
+import { PageSearchContent } from "../components/seo/SearchLandingContent";
+import { trackEvent } from "../services/analytics";
 import { useWishlist } from "../hooks/useWishlist";
 
 const SITE_URL = "https://bhavani-art-world.onrender.com";
@@ -159,6 +161,16 @@ const ProductDetails = () => {
     });
 
     upsertJsonLd("product", createProductSchema({ product, url: canonicalUrl }));
+    trackEvent("view_item", {
+      currency: "INR",
+      value: Number(product.price) || 0,
+      items: [{
+        item_id: String(product._id || id),
+        item_name: productTitle,
+        item_category: product.category || "Artwork",
+        price: Number(product.price) || 0,
+      }],
+    });
     upsertJsonLd("product-breadcrumbs", createBreadcrumbSchema([
       { name: "Home", url: SITE_URL },
       { name: "Shop", url: `${SITE_URL}/shop` },
@@ -300,6 +312,17 @@ const ProductDetailsContent = ({ product }) => {
 
         <ProductInformation product={product} />
       </Container>
+
+      <PageSearchContent
+        title={`${product.name} | Bhavani's Art World`}
+        links={[
+          { to: categorySlug ? `/shop?category=${categorySlug}` : "/shop", label: product.category ? `More ${product.category}` : "Shop Artwork" },
+          { to: "/collections", label: "Explore Collections" },
+          { to: "/custom-orders", label: "Request Custom Artwork" },
+        ]}
+      >
+        Discover this handcrafted artwork from Bhavani&apos;s Art World. Browse related {product.category || "artwork"} and explore our wider range of traditional Indian art, handmade creations and custom artwork.
+      </PageSearchContent>
 
       <RelatedProducts currentProduct={product} />
 

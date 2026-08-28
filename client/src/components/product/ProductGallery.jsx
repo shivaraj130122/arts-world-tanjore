@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { motion } from "framer-motion";
 import { FiZoomIn } from "react-icons/fi";
 import { classNames } from "../../utils/helpers";
@@ -30,7 +30,7 @@ const ProductGallery = ({ images, name, onOpenLightbox }) => {
           <>
             <img
               src={activeSrc}
-              alt={name}
+              alt={`${name} - Bhavani's Art World`}
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
             <span className="absolute bottom-4 right-4 flex items-center gap-1.5 rounded-full bg-primary/90 px-3 py-1.5 text-xs font-medium text-background opacity-0 transition-opacity group-hover:opacity-100">
@@ -58,10 +58,16 @@ const ProductGallery = ({ images, name, onOpenLightbox }) => {
               aria-current={i === activeIndex}
               className={classNames(
                 "aspect-square w-16 shrink-0 overflow-hidden rounded-xl border-2 transition sm:w-full",
-                i === activeIndex ? "border-secondary" : "border-transparent opacity-70 hover:opacity-100"
+                i === activeIndex
+                  ? "border-secondary"
+                  : "border-transparent opacity-70 hover:opacity-100"
               )}
             >
-              <img src={src} alt="" className="h-full w-full object-cover" />
+              <img
+                src={src}
+                alt={`${name} - product image ${i + 1}`}
+                className="h-full w-full object-cover"
+              />
             </button>
           ))}
         </div>

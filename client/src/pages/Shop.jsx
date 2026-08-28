@@ -17,8 +17,10 @@ import ProductGrid from "../components/shop/ProductGrid";
 import Pagination from "../components/shop/Pagination";
 import EmptyProducts from "../components/shop/EmptyProducts";
 import ProductQuickView from "../components/shop/ProductQuickView";
+import { CategorySearchContent } from "../components/seo/SearchLandingContent";
 
 import { useDebounce } from "../hooks/useDebounce";
+import { trackEvent } from "../services/analytics";
 
 import {
   getProducts,
@@ -147,6 +149,10 @@ const Shop = () => {
             categoryData.categories ||
               []
           );
+
+          trackEvent("view_item_list", {
+            item_list_name: searchParams.get("category") || "All Artwork",
+          });
         } catch (error) {
           if (
             cancelled
@@ -475,6 +481,12 @@ const Shop = () => {
           </div>
         </div>
       </Container>
+
+      {filters.category !== "all" && (
+        <Container className="pb-12">
+          <CategorySearchContent slug={filters.category} />
+        </Container>
+      )}
 
       <MobileFilterDrawer
         isOpen={

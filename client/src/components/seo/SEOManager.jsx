@@ -20,6 +20,11 @@ const SEO_BY_PATH = {
     description:
       "Learn about Bhavani's Art World, our passion for Tanjore paintings, Indian craftsmanship, traditional artistry, and custom handmade creations.",
   },
+  "/collections": {
+    title: "Art Collections | Bhavani's Art World",
+    description:
+      "Explore curated Tanjore paintings, handmade fabric art, custom creations, wedding art, gifting ideas, and traditional Indian artwork.",
+  },
 };
 
 const DEFAULT_SEO = {
@@ -28,10 +33,12 @@ const DEFAULT_SEO = {
     "Bhavani's Art World showcases handcrafted Tanjore paintings, custom artwork, and unique handmade creations.",
 };
 
-const setMeta = (attribute, name, content) => {
+const upsertMeta = (attribute, name, content) => {
   if (!content) return;
 
-  let element = document.head.querySelector(`meta[${attribute}="${name}"]`);
+  let element = document.head.querySelector(
+    `meta[${attribute}="${name}"]`
+  );
 
   if (!element) {
     element = document.createElement("meta");
@@ -42,16 +49,49 @@ const setMeta = (attribute, name, content) => {
   element.setAttribute("content", content);
 };
 
-const setCanonical = (url) => {
-  let element = document.head.querySelector('link[rel="canonical"]');
+export const setSEO = ({
+  title,
+  description,
+  canonicalUrl,
+  image = DEFAULT_IMAGE,
+  imageAlt = "Bhavani's Art World",
+  type = "website",
+}) => {
+  const safeTitle = title || DEFAULT_SEO.title;
+  const safeDescription = description || DEFAULT_SEO.description;
+  const safeCanonical = canonicalUrl || SITE_URL;
 
-  if (!element) {
-    element = document.createElement("link");
-    element.setAttribute("rel", "canonical");
-    document.head.appendChild(element);
+  document.title = safeTitle;
+
+  upsertMeta("name", "description", safeDescription);
+  upsertMeta("name", "robots", "index, follow");
+
+  upsertMeta("property", "og:type", type);
+  upsertMeta("property", "og:title", safeTitle);
+  upsertMeta("property", "og:description", safeDescription);
+  upsertMeta("property", "og:url", safeCanonical);
+  upsertMeta("property", "og:site_name", "Bhavani's Art World");
+  upsertMeta("property", "og:locale", "en_IN");
+  upsertMeta("property", "og:image", image);
+  upsertMeta("property", "og:image:alt", imageAlt);
+
+  upsertMeta("name", "twitter:card", "summary_large_image");
+  upsertMeta("name", "twitter:title", safeTitle);
+  upsertMeta("name", "twitter:description", safeDescription);
+  upsertMeta("name", "twitter:image", image);
+  upsertMeta("name", "twitter:image:alt", imageAlt);
+
+  let canonical = document.head.querySelector(
+    'link[rel="canonical"]'
+  );
+
+  if (!canonical) {
+    canonical = document.createElement("link");
+    canonical.setAttribute("rel", "canonical");
+    document.head.appendChild(canonical);
   }
 
-  element.setAttribute("href", url);
+  canonical.setAttribute("href", safeCanonical);
 };
 
 const SEOManager = () => {
@@ -59,36 +99,19 @@ const SEOManager = () => {
 
   useEffect(() => {
     const seo = SEO_BY_PATH[pathname] || DEFAULT_SEO;
-    const canonicalPath = SEO_BY_PATH[pathname] ? pathname : "/";
 
     const canonicalUrl =
-      canonicalPath === "/"
-        ? SITE_URL
-        : `${SITE_URL}${canonicalPath}`;
+      SEO_BY_PATH[pathname]
+        ? pathname === "/"
+          ? SITE_URL
+          : `${SITE_URL}${pathname}`
+        : SITE_URL;
 
-    document.title = seo.title;
-
-    setMeta("name", "description", seo.description);
-    setMeta("name", "robots", "index, follow");
-
-    setMeta("property", "og:type", "website");
-    setMeta("property", "og:title", seo.title);
-    setMeta("property", "og:description", seo.description);
-    setMeta("property", "og:url", canonicalUrl);
-    setMeta("property", "og:site_name", "Bhavani's Art World");
-    setMeta("property", "og:locale", "en_IN");
-    setMeta("property", "og:image", DEFAULT_IMAGE);
-    setMeta("property", "og:image:width", "1200");
-    setMeta("property", "og:image:height", "630");
-    setMeta("property", "og:image:alt", "Bhavani's Art World");
-
-    setMeta("name", "twitter:card", "summary_large_image");
-    setMeta("name", "twitter:title", seo.title);
-    setMeta("name", "twitter:description", seo.description);
-    setMeta("name", "twitter:image", DEFAULT_IMAGE);
-    setMeta("name", "twitter:image:alt", "Bhavani's Art World");
-
-    setCanonical(canonicalUrl);
+    setSEO({
+      title: seo.title,
+      description: seo.description,
+      canonicalUrl,
+    });
   }, [pathname]);
 
   return null;

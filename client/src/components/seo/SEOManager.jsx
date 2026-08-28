@@ -2,8 +2,16 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { getCategoryBySlug } from "../../services/categoryService";
 import { getCollections } from "../../services/collectionService";
+import {
+  createBreadcrumbSchema,
+  createItemListSchema,
+  createOrganizationSchema,
+  createWebPageSchema,
+  createWebsiteSchema,
+  getSiteUrl,
+} from "./structuredData";
 
-const SITE_URL = "https://bhavani-art-world.onrender.com";
+const SITE_URL = getSiteUrl();
 const DEFAULT_IMAGE = `${SITE_URL}/og-image.png`;
 
 const STATIC_SEO = {
@@ -27,6 +35,16 @@ const STATIC_SEO = {
     description:
       "Explore curated Tanjore paintings, handmade fabric art, custom creations, wedding art, gifting ideas, and traditional Indian artwork.",
   },
+  "/custom-orders": {
+    title: "Custom Artwork & Portraits | Bhavani's Art World",
+    description:
+      "Request a custom hand-painted artwork or personalized creation from Bhavani's Art World, made to order with traditional craftsmanship.",
+  },
+  "/contact": {
+    title: "Contact Bhavani's Art World | Tanjore Art & Custom Orders",
+    description:
+      "Contact Bhavani's Art World for Tanjore paintings, handcrafted artwork, custom orders, product questions, and art enquiries.",
+  },
 };
 
 const DEFAULT_SEO = {
@@ -47,51 +65,38 @@ const toSlugTitle = (slug) =>
 
 const upsertMeta = (attribute, name, content) => {
   if (!content) return;
-
-  let element = document.head.querySelector(
-    `meta[${attribute}="${name}"]`
-  );
-
+  let element = document.head.querySelector(`meta[${attribute}="${name}"]`);
   if (!element) {
     element = document.createElement("meta");
     element.setAttribute(attribute, name);
     document.head.appendChild(element);
   }
-
   element.setAttribute("content", content);
 };
 
 const upsertLink = (rel, href) => {
   let element = document.head.querySelector(`link[rel="${rel}"]`);
-
   if (!element) {
     element = document.createElement("link");
     element.setAttribute("rel", rel);
     document.head.appendChild(element);
   }
-
   element.setAttribute("href", href);
 };
 
 const upsertJsonLd = (id, data) => {
-  let script = document.head.querySelector(
-    `script[data-seo-jsonld="${id}"]`
-  );
-
+  let script = document.head.querySelector(`script[data-seo-jsonld="${id}"]`);
   if (!script) {
     script = document.createElement("script");
     script.type = "application/ld+json";
     script.setAttribute("data-seo-jsonld", id);
     document.head.appendChild(script);
   }
-
   script.textContent = JSON.stringify(data);
 };
 
 const removeJsonLd = (id) => {
-  document.head
-    .querySelector(`script[data-seo-jsonld="${id}"]`)
-    ?.remove();
+  document.head.querySelector(`script[data-seo-jsonld="${id}"]`)?.remove();
 };
 
 export const setSEO = ({
@@ -107,10 +112,8 @@ export const setSEO = ({
   const safeCanonical = canonicalUrl || SITE_URL;
 
   document.title = safeTitle;
-
   upsertMeta("name", "description", safeDescription);
   upsertMeta("name", "robots", "index, follow");
-
   upsertMeta("property", "og:type", type);
   upsertMeta("property", "og:title", safeTitle);
   upsertMeta("property", "og:description", safeDescription);
@@ -119,112 +122,98 @@ export const setSEO = ({
   upsertMeta("property", "og:locale", "en_IN");
   upsertMeta("property", "og:image", image);
   upsertMeta("property", "og:image:alt", imageAlt);
-
+  upsertMeta("property", "og:image:width", "1200");
+  upsertMeta("property", "og:image:height", "630");
   upsertMeta("name", "twitter:card", "summary_large_image");
   upsertMeta("name", "twitter:title", safeTitle);
   upsertMeta("name", "twitter:description", safeDescription);
   upsertMeta("name", "twitter:image", image);
   upsertMeta("name", "twitter:image:alt", imageAlt);
-
   upsertLink("canonical", safeCanonical);
 };
 
-const setSiteStructuredData = () => {
-  upsertJsonLd("website", {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: "Bhavani's Art World",
-    url: SITE_URL,
-    description:
-      "Handcrafted Tanjore paintings, traditional Indian art, custom artwork, and unique handmade creations.",
-  });
+const setGlobalStructuredData = () => {
+  upsertJsonLd("organization", createOrganizationSchema());
+  upsertJsonLd("website", createWebsiteSchema());
+};
+
+const setPageStructuredData = ({ title, description, canonicalUrl, image }) => {
+  upsertJsonLd(
+    "webpage",
+    createWebPageSchema({
+      name: title,
+      description,
+      url: canonicalUrl,
+      image,
+    })
+  );
 };
 
 const setBreadcrumbStructuredData = (items) => {
-  upsertJsonLd("breadcrumbs", {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: items.map((item, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      name: item.name,
-      item: item.url,
-    })),
-  });
+  upsertJsonLd("breadcrumbs", createBreadcrumbSchema(items));
 };
 
 const setCollectionListStructuredData = (collections) => {
-  const activeCollections = (collections || []).filter(
-    (collection) => collection?.isActive !== false
-  );
+  const items = (collections || [])
+    .filter((collection) => collection?.isActive !== false)
+    .slice(0, 100)
+    .map((collection) => ({
+      name: cleanText(collection?.title, "Art Collection"),
+    }));
 
-  /*
-   * There is currently only a public /collections route in AppRoutes.
-   * Individual collection URLs are intentionally NOT invented here.
-   */
-  upsertJsonLd("collection-list", {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    name: "Bhavani's Art World Collections",
-    url: `${SITE_URL}/collections`,
-    numberOfItems: activeCollections.length,
-    itemListElement: activeCollections
-      .slice(0, 100)
-      .map((collection, index) => ({
-        "@type": "ListItem",
-        position: index + 1,
-        name: cleanText(collection?.title, "Art Collection"),
-      })),
-  });
+  upsertJsonLd(
+    "collection-list",
+    createItemListSchema({
+      name: "Bhavani's Art World Collections",
+      url: `${SITE_URL}/collections`,
+      items,
+    })
+  );
 };
 
 const SEOManager = () => {
   const { pathname, search } = useLocation();
 
   useEffect(() => {
-    /*
-     * ProductDetails owns SEO for /product/:id after its product API response.
-     * Never overwrite product metadata from this global manager.
-     */
-    if (pathname.startsWith("/product/")) {
-      return;
-    }
+    if (pathname.startsWith("/product/")) return;
 
     let cancelled = false;
 
     const applySEO = async () => {
+      setGlobalStructuredData();
+
       if (pathname === "/shop") {
         const params = new URLSearchParams(search);
         const categorySlug = cleanText(params.get("category"));
 
         if (categorySlug) {
           const fallbackName = toSlugTitle(categorySlug);
+          const canonicalUrl = `${SITE_URL}/shop?category=${encodeURIComponent(categorySlug)}`;
 
           try {
             const data = await getCategoryBySlug(categorySlug);
             if (cancelled) return;
-
             const category = data?.category || data?.data || data;
-            const categoryName = cleanText(
-              category?.title || category?.name || fallbackName,
-              fallbackName
-            );
+            const categoryName = cleanText(category?.title || category?.name, fallbackName);
             const categoryDescription = cleanText(
               category?.description,
               `Explore ${categoryName} artwork and handcrafted creations from Bhavani's Art World.`
             ).slice(0, 160);
-
-            const canonicalUrl =
-              `${SITE_URL}/shop?category=${encodeURIComponent(categorySlug)}`;
+            const image = category?.image || DEFAULT_IMAGE;
 
             setSEO({
               title: `${categoryName} | Shop | Bhavani's Art World`,
               description: categoryDescription,
               canonicalUrl,
-              image: category?.image || undefined,
+              image,
               imageAlt: categoryName,
             });
-
+            setPageStructuredData({
+              title: `${categoryName} | Shop | Bhavani's Art World`,
+              description: categoryDescription,
+              canonicalUrl,
+              image,
+            });
             setBreadcrumbStructuredData([
               { name: "Home", url: SITE_URL },
               { name: "Shop", url: `${SITE_URL}/shop` },
@@ -232,23 +221,18 @@ const SEOManager = () => {
             ]);
             return;
           } catch (error) {
-            console.warn(
-              "Category SEO lookup failed; using fallback metadata.",
-              error
-            );
-
+            console.warn("Category SEO lookup failed; using fallback metadata.", error);
             if (cancelled) return;
-
-            const canonicalUrl =
-              `${SITE_URL}/shop?category=${encodeURIComponent(categorySlug)}`;
-
             setSEO({
               title: `${fallbackName} | Shop | Bhavani's Art World`,
-              description:
-                `Explore ${fallbackName} artwork and handcrafted creations from Bhavani's Art World.`,
+              description: `Explore ${fallbackName} artwork and handcrafted creations from Bhavani's Art World.`,
               canonicalUrl,
             });
-
+            setPageStructuredData({
+              title: `${fallbackName} | Shop | Bhavani's Art World`,
+              description: `Explore ${fallbackName} artwork and handcrafted creations from Bhavani's Art World.`,
+              canonicalUrl,
+            });
             setBreadcrumbStructuredData([
               { name: "Home", url: SITE_URL },
               { name: "Shop", url: `${SITE_URL}/shop` },
@@ -259,54 +243,20 @@ const SEOManager = () => {
         }
       }
 
-      if (pathname === "/collections") {
-        const seo = STATIC_SEO["/collections"];
-
-        setSEO({
-          title: seo.title,
-          description: seo.description,
-          canonicalUrl: `${SITE_URL}/collections`,
-        });
-
-        setBreadcrumbStructuredData([
-          { name: "Home", url: SITE_URL },
-          { name: "Collections", url: `${SITE_URL}/collections` },
-        ]);
-
-        try {
-          const data = await getCollections();
-          if (!cancelled) {
-            setCollectionListStructuredData(data?.collections || []);
-          }
-        } catch (error) {
-          console.warn(
-            "Collection structured-data lookup failed; keeping static collection SEO.",
-            error
-          );
-          if (!cancelled) {
-            removeJsonLd("collection-list");
-          }
-        }
-        return;
-      }
-
       const seo = STATIC_SEO[pathname] || DEFAULT_SEO;
       const canonicalUrl = STATIC_SEO[pathname]
-        ? pathname === "/"
-          ? SITE_URL
-          : `${SITE_URL}${pathname}`
+        ? pathname === "/" ? SITE_URL : `${SITE_URL}${pathname}`
         : SITE_URL;
 
-      setSEO({
+      setSEO({ title: seo.title, description: seo.description, canonicalUrl });
+      setPageStructuredData({
         title: seo.title,
         description: seo.description,
         canonicalUrl,
       });
 
       if (pathname === "/") {
-        setBreadcrumbStructuredData([
-          { name: "Home", url: SITE_URL },
-        ]);
+        setBreadcrumbStructuredData([{ name: "Home", url: SITE_URL }]);
       } else if (STATIC_SEO[pathname]) {
         setBreadcrumbStructuredData([
           { name: "Home", url: SITE_URL },
@@ -316,14 +266,22 @@ const SEOManager = () => {
         removeJsonLd("breadcrumbs");
         removeJsonLd("collection-list");
       }
+
+      if (pathname === "/collections") {
+        try {
+          const data = await getCollections();
+          if (!cancelled) setCollectionListStructuredData(data?.collections || []);
+        } catch (error) {
+          console.warn("Collection structured-data lookup failed.", error);
+          if (!cancelled) removeJsonLd("collection-list");
+        }
+      } else {
+        removeJsonLd("collection-list");
+      }
     };
 
-    setSiteStructuredData();
     applySEO();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [pathname, search]);
 
   return null;

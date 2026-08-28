@@ -13,6 +13,7 @@ import RelatedProducts from "../components/product/RelatedProducts";
 
 import { getProductById } from "../services/productService";
 import { setSEO } from "../components/seo/SEOManager";
+import { createBreadcrumbSchema, createProductSchema } from "../components/seo/structuredData";
 import { useCart } from "../hooks/useCart";
 import { useWishlist } from "../hooks/useWishlist";
 
@@ -136,6 +137,50 @@ const ProductDetails = () => {
       imageAlt: productTitle,
       type: "product",
     });
+
+    const productUrl = `${SITE_URL}/product/${encodeURIComponent(product._id || id)}`;
+    const categorySlug = product.category
+      ? String(product.category)
+          .toLowerCase()
+          .trim()
+          .replace(/\s+&\s+/g, "-")
+          .replace(/\s+/g, "-")
+      : null;
+
+    const breadcrumbItems = [
+      { name: "Home", url: SITE_URL },
+      { name: "Shop", url: `${SITE_URL}/shop` },
+    ];
+
+    if (categorySlug) {
+      breadcrumbItems.push({
+        name: String(product.category).trim(),
+        url: `${SITE_URL}/shop?category=${encodeURIComponent(categorySlug)}`,
+      });
+    }
+
+    breadcrumbItems.push({ name: productTitle, url: productUrl });
+
+    let productSchema = createProductSchema({ product, url: productUrl });
+    let breadcrumbSchema = createBreadcrumbSchema(breadcrumbItems);
+
+    let productScript = document.head.querySelector('script[data-seo-jsonld="product"]');
+    if (!productScript) {
+      productScript = document.createElement("script");
+      productScript.type = "application/ld+json";
+      productScript.setAttribute("data-seo-jsonld", "product");
+      document.head.appendChild(productScript);
+    }
+    productScript.textContent = JSON.stringify(productSchema);
+
+    let breadcrumbScript = document.head.querySelector('script[data-seo-jsonld="product-breadcrumbs"]');
+    if (!breadcrumbScript) {
+      breadcrumbScript = document.createElement("script");
+      breadcrumbScript.type = "application/ld+json";
+      breadcrumbScript.setAttribute("data-seo-jsonld", "product-breadcrumbs");
+      document.head.appendChild(breadcrumbScript);
+    }
+    breadcrumbScript.textContent = JSON.stringify(breadcrumbSchema);
   }, [product, id]);
 
   if (isLoading) {

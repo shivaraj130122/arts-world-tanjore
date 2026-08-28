@@ -2,97 +2,79 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const ROOT = path.resolve("client");
+const SITE_URL = "https://bhavani-art-world.onrender.com";
 const REQUIRED_FILES = [
   "index.html",
   "public/robots.txt",
   "public/sitemap.xml",
+  "src/components/seo/SEOManager.jsx",
+  "src/components/seo/structuredData.js",
+  "src/components/seo/ImageSEOManager.jsx",
 ];
 
-const REQUIRED_HTML_PATTERNS = [
-  /<meta\s+[\s\S]*?name=["']description["']/i,
-  /<meta\s+[\s\S]*?property=["']og:title["']/i,
-  /<meta\s+[\s\S]*?property=["']og:description["']/i,
-  /<meta\s+[\s\S]*?name=["']twitter:card["']/i,
-  /<link\s+[\s\S]*?rel=["']canonical["']/i,
-];
-
+const read = async (file) => fs.readFile(path.join(ROOT, file), "utf8");
 const exists = async (file) => {
-  try {
-    await fs.access(path.join(ROOT, file));
-    return true;
-  } catch {
-    return false;
-  }
+  try { await fs.access(path.join(ROOT, file)); return true; }
+  catch { return false; }
+};
+
+const check = (label, ok) => {
+  console.log(`${ok ? "PASS" : "FAIL"} ${label}`);
+  return ok;
 };
 
 const main = async () => {
   let failed = false;
-
-  console.log("Bhavani's Art World — Phase 2H SEO audit");
-  console.log("-----------------------------------------");
+  console.log("Bhavani's Art World — Complete SEO audit");
+  console.log("------------------------------------------");
 
   for (const file of REQUIRED_FILES) {
-    const ok = await exists(file);
-    console.log(`${ok ? "PASS" : "FAIL"} ${file}`);
-    if (!ok) failed = true;
+    if (!check(file, await exists(file))) failed = true;
   }
 
-  const indexPath = path.join(ROOT, "index.html");
-  let indexHtml = "";
+  const index = await read("index.html");
+  const patterns = [
+    ["meta description", /<meta\s+[^>]*name=["']description["']/i],
+    ["canonical", /<link\s+[^>]*rel=["']canonical["']/i],
+    ["Open Graph title", /property=["']og:title["']/i],
+    ["Open Graph description", /property=["']og:description["']/i],
+    ["Twitter card", /name=["']twitter:card["']/i],
+    ["Google verification", /name=["']google-site-verification["']/i],
+  ];
+  for (const [label, pattern] of patterns) if (!check(label, pattern.test(index))) failed = true;
 
-  try {
-    indexHtml = await fs.readFile(indexPath, "utf8");
-  } catch {
-    console.log("FAIL client/index.html could not be read");
-    process.exit(1);
-  }
-for (const pattern of REQUIRED_HTML_PATTERNS) {
-  const ok = pattern.test(indexHtml);
-  console.log(
-    `${ok ? "PASS" : "FAIL"} ${pattern.source}`
-  );
-  if (!ok) failed = true;
-}
-  
+  const robots = await read("public/robots.txt");
+  for (const [label, text] of [
+    ["robots allows public crawling", "Allow: /"],
+    ["robots references sitemap", `Sitemap: ${SITE_URL}/sitemap.xml`],
+    ["robots blocks admin", "Disallow: /admin"],
+    ["robots blocks checkout", "Disallow: /checkout"],
+  ]) if (!check(label, robots.includes(text))) failed = true;
 
-  const sitemapPath = path.join(ROOT, "public/sitemap.xml");
+  const sitemap = await read("public/sitemap.xml");
+  if (!check("sitemap XML namespace", sitemap.includes("sitemaps.org/schemas/sitemap/0.9"))) failed = true;
+  if (!check("sitemap contains URL entries", /<url>/.test(sitemap))) failed = true;
+  if (!check("sitemap contains product URLs", sitemap.includes(`<loc>${SITE_URL}/product/`))) failed = true;
+  if (!check("sitemap contains public core routes", ["/shop", "/collections", "/custom-orders", "/about", "/contact"].every((route) => sitemap.includes(`${SITE_URL}${route}`)))) failed = true;
+  if (!check("sitemap contains no admin URLs", !sitemap.includes(`${SITE_URL}/admin`))) failed = true;
 
-  try {
-    const sitemap = await fs.readFile(sitemapPath, "utf8");
-    const hasUrlset =
-      sitemap.includes("<urlset") &&
-      sitemap.includes("sitemaps.org/schemas/sitemap/0.9");
-    const hasUrl = sitemap.includes("<url>");
-
-    console.log(`${hasUrlset ? "PASS" : "FAIL"} sitemap XML structure`);
-    console.log(`${hasUrl ? "PASS" : "FAIL"} sitemap contains URL entries`);
-
-    if (!hasUrlset || !hasUrl) failed = true;
-  } catch {
-    // Already reported by REQUIRED_FILES.
-  }
-
-  const robotsPath = path.join(ROOT, "public/robots.txt");
-
-  try {
-    const robots = await fs.readFile(robotsPath, "utf8");
-    const hasSitemap =
-      robots.includes("Sitemap: https://bhavani-art-world.onrender.com/sitemap.xml");
-    const protectsAdmin = robots.includes("Disallow: /admin");
-
-    console.log(`${hasSitemap ? "PASS" : "FAIL"} robots sitemap reference`);
-    console.log(`${protectsAdmin ? "PASS" : "FAIL"} admin crawl restriction`);
-
-    if (!hasSitemap || !protectsAdmin) failed = true;
-  } catch {
-    // Already reported by REQUIRED_FILES.
-  }
+  const manager = await read("src/components/seo/SEOManager.jsx");
+  const schema = await read("src/components/seo/structuredData.js");
+  const product = await read("src/pages/ProductDetails.jsx");
+  for (const [label, text, source] of [
+    ["Organization schema implementation", "createOrganizationSchema", schema],
+    ["WebSite schema implementation", "createWebsiteSchema", schema],
+    ["WebPage schema implementation", "createWebPageSchema", schema],
+    ["Breadcrumb schema implementation", "createBreadcrumbSchema", schema],
+    ["Product schema implementation", "createProductSchema", schema],
+    ["Product page uses Product schema", "createProductSchema", product],
+    ["SEO manager uses WebPage schema", "setPageStructuredData", manager],
+  ]) if (!check(label, source.includes(text))) failed = true;
 
   if (failed) {
     console.error("\nSEO audit failed.");
     process.exit(1);
   }
-
   console.log("\nSEO audit passed.");
 };
 

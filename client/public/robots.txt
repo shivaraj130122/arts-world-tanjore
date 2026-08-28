@@ -1,12 +1,16 @@
 User-agent: *
 Allow: /
 
-# Keep private/admin areas out of search results.
+# Keep private/account and administration areas out of search crawling.
 Disallow: /admin
 Disallow: /login
+Disallow: /register
 Disallow: /signup
 Disallow: /forgot-password
 Disallow: /reset-password
 Disallow: /profile
+Disallow: /cart
+Disallow: /checkout
+Disallow: /wishlist
 
 Sitemap: https://bhavani-art-world.onrender.com/sitemap.xml

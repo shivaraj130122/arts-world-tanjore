@@ -115,6 +115,7 @@ const removeJsonLd = (id) => {
   document.head.querySelector(`script[data-seo-jsonld="${id}"]`)?.remove();
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const setSEO = ({
   title,
   description,

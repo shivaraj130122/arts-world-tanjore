@@ -47,15 +47,16 @@
     },
 
     "blouse-painting": {
-      primary: "Blouse Paintings",
-      secondary: [
-        "hand-painted blouse designs",
-        "blouse painting",
-        "custom blouse paintings",
-      ],
-      intro:
-        "Explore custom blouse paintings and hand-painted blouse designs made to bring personalized artwork and detail to your occasion wear.",
-    },
+  primary: "Blouse Painting",
+  secondary: [
+    "blouse painting designs",
+    "hand painted blouse designs",
+    "custom blouse painting",
+    "blouse fabric painting",
+  ],
+  intro:
+    "Explore beautiful blouse painting designs and hand painted blouse artwork created on fabric. Discover custom blouse paintings and traditional Indian-inspired designs for sarees, weddings, and special occasions.",
+},
 
     "blouse-paintings": {
       primary: "Blouse Paintings",

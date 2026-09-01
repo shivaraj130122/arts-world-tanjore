@@ -28,7 +28,6 @@ const emptyCategory = {
   title: "",
   description: "",
   slug: "",
-  itemCount: 0,
   image: "",
   isActive: true,
 };
@@ -254,9 +253,6 @@ const AdminCategories = () => {
         category.slug ?? ""
       ),
 
-      itemCount:
-        category.itemCount ?? 0,
-
       image: String(
         category.image ?? ""
       ),
@@ -330,10 +326,6 @@ const AdminCategories = () => {
         )
           .trim()
           .toLowerCase(),
-
-        itemCount: Number(
-          form.itemCount ?? 0
-        ),
 
         image: String(
           form.image ?? ""
@@ -524,20 +516,21 @@ const AdminCategories = () => {
                   />
                 </div>
 
-                {/* Item Count */}
+                {/* Item Count - calculated automatically */}
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-text">
                     Item Count
                   </label>
 
-                  <input
-                    type="number"
-                    min="0"
-                    name="itemCount"
-                    value={form.itemCount}
-                    onChange={handleChange}
-                    className="w-full rounded-lg border border-primary/20 px-4 py-2.5 text-sm outline-none focus:border-primary"
-                  />
+                  <div className="flex min-h-[42px] items-center rounded-lg border border-primary/10 bg-gray-50 px-4 py-2.5 text-sm text-text/60">
+                    {editingId
+                      ? `${categories.find((item) => item._id === editingId)?.itemCount ?? 0} active products`
+                      : "Calculated automatically after products are added"}
+                  </div>
+
+                  <p className="mt-1.5 text-xs text-text/45">
+                    Automatically calculated from active products in this category.
+                  </p>
                 </div>
               </div>
 

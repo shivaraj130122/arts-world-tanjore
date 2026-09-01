@@ -1,6 +1,33 @@
 const Category = require("../models/Category");
 const Product = require("../models/Product");
 const Collection = require("../models/Collection");
+// =====================================================
+// SYNC CATEGORY ITEM COUNT
+// Counts active products only. Legacy title-based
+// products are also supported.
+// =====================================================
+
+const syncCategoryItemCount = async (categoryDoc) => {
+  if (!categoryDoc) return 0;
+
+  const slug = String(categoryDoc.slug || "").trim();
+  const title = String(categoryDoc.title || "").trim();
+
+  const match = [];
+  if (slug) match.push({ category: slug });
+  if (title && title !== slug) match.push({ category: title });
+
+  const itemCount = match.length
+    ? await Product.countDocuments({
+        $or: match,
+        isActive: { $ne: false },
+      })
+    : 0;
+
+  await Category.findByIdAndUpdate(categoryDoc._id, { itemCount });
+  return itemCount;
+};
+
 
 // =====================================================
 // GET ALL CATEGORIES
@@ -15,6 +42,12 @@ const getCategories = async (req, res) => {
     }).sort({
       title: 1,
     });
+
+    await Promise.all(
+      categories.map(async (category) => {
+        category.itemCount = await syncCategoryItemCount(category);
+      })
+    );
 
     return res.status(200).json({
       success: true,
@@ -44,6 +77,12 @@ const getAdminCategories = async (req, res) => {
     const categories = await Category.find({}).sort({
       title: 1,
     });
+
+    await Promise.all(
+      categories.map(async (category) => {
+        category.itemCount = await syncCategoryItemCount(category);
+      })
+    );
 
     return res.status(200).json({
       success: true,
@@ -155,10 +194,12 @@ const createCategory = async (req, res) => {
           description || ""
         ).trim(),
         slug: normalizedSlug,
-        itemCount: Number(itemCount || 0),
+        itemCount: 0,
         image: String(image || "").trim(),
         isActive: isActive !== false,
       });
+
+    category.itemCount = await syncCategoryItemCount(category);
 
     return res.status(201).json({
       success: true,
@@ -230,10 +271,7 @@ const updateCategory = async (req, res) => {
           .toLowerCase();
     }
 
-    if (itemCount !== undefined) {
-      updateData.itemCount =
-        Number(itemCount || 0);
-    }
+    // itemCount is calculated automatically from active products.
 
     if (image !== undefined) {
       updateData.image =
@@ -313,6 +351,8 @@ const updateCategory = async (req, res) => {
       }
     }
 
+    category.itemCount = await syncCategoryItemCount(category);
+
     return res.status(200).json({
       success: true,
       message: "Category updated successfully",
@@ -369,6 +409,8 @@ const updateCategoryStatus = async (
         message: "Category not found",
       });
     }
+
+    category.itemCount = await syncCategoryItemCount(category);
 
     return res.status(200).json({
       success: true,

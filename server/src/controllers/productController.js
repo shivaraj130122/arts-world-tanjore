@@ -1,5 +1,42 @@
 const Product = require("../models/Product");
 const Category = require("../models/Category");
+// =====================================================
+// SYNC CATEGORY ITEM COUNT
+// Counts active products only and supports both slug
+// and legacy title category values.
+// =====================================================
+
+const syncCategoryItemCount = async (categoryValue) => {
+  const value = String(categoryValue || "").trim();
+  if (!value) return;
+
+  const categoryDoc = await Category.findOne({
+    $or: [
+      { slug: value.toLowerCase() },
+      { title: value },
+    ],
+  });
+
+  if (!categoryDoc) return;
+
+  const match = [{ category: categoryDoc.slug }];
+  if (
+    categoryDoc.title &&
+    categoryDoc.title !== categoryDoc.slug
+  ) {
+    match.push({ category: categoryDoc.title });
+  }
+
+  const itemCount = await Product.countDocuments({
+    $or: match,
+    isActive: { $ne: false },
+  });
+
+  await Category.findByIdAndUpdate(categoryDoc._id, {
+    itemCount,
+  });
+};
+
 
 // =====================================================
 // PUBLIC PRODUCTS
@@ -147,6 +184,8 @@ const getProductById =
         });
       }
 
+      await syncCategoryItemCount(product.category);
+
       return res.status(200).json({
         success: true,
         product,
@@ -263,6 +302,8 @@ const createProduct =
           payload
         );
 
+      await syncCategoryItemCount(product.category);
+
       return res.status(201).json({
         success: true,
         message:
@@ -334,6 +375,8 @@ const updateProduct =
 
       // Same ID → normal update
       if (requestedId === oldId) {
+        const oldCategory = current.category;
+
         const product =
           await Product.findByIdAndUpdate(
             oldId,
@@ -343,6 +386,9 @@ const updateProduct =
               runValidators: true,
             }
           );
+
+        await syncCategoryItemCount(oldCategory);
+        await syncCategoryItemCount(product.category);
 
         return res.status(200).json({
           success: true,
@@ -380,6 +426,9 @@ const updateProduct =
       await Product.findByIdAndDelete(
         oldId
       );
+
+      await syncCategoryItemCount(current.category);
+      await syncCategoryItemCount(replacement.category);
 
       return res.status(200).json({
         success: true,
@@ -443,6 +492,8 @@ const updateProductStatus =
         });
       }
 
+      await syncCategoryItemCount(product.category);
+
       return res.status(200).json({
         success: true,
         message: isActive
@@ -484,6 +535,8 @@ const deleteProduct =
             "Product not found",
         });
       }
+
+      await syncCategoryItemCount(product.category);
 
       return res.status(200).json({
         success: true,

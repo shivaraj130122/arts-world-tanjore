@@ -9,6 +9,7 @@ dotenv.config();
 const connectDB = require("./config/db");
 
 const productRoutes = require("./routes/productRoutes");
+const merchantFeedRoutes = require("./routes/merchantFeedRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const collectionRoutes = require("./routes/collectionRoutes");
 const authRoutes = require("./routes/authRoutes");
@@ -66,6 +67,7 @@ app.use("/api", apiLimiter);
 
 // API routes
 app.use("/api/products", productRoutes);
+app.use("/api/merchant", merchantFeedRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/collections", collectionRoutes);
 app.use("/api/auth", authRoutes);

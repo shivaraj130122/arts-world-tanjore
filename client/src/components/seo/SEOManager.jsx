@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+﻿import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { getCategoryBySlug } from "../../services/categoryService";
 import { getCollections } from "../../services/collectionService";
@@ -43,7 +43,11 @@ const STATIC_SEO = {
     description:
       "Request a custom hand-painted artwork or personalized creation from Bhavani's Art World, made to order with traditional craftsmanship.",
   },
-  "/contact": {
+  "/return-policy": {
+    title: "Return & Refund Policy | Bhavani's Art World",
+    description:
+      "Read the return, refund, exchange, and damaged-product policy for purchases from Bhavani's Art World.",
+  },  "/contact": {
     title: "Contact Bhavani's Art World | Tanjore Art & Custom Orders",
     description:
       "Contact Bhavani's Art World for Tanjore paintings, handcrafted artwork, custom orders, product questions, and art enquiries.",
@@ -360,3 +364,4 @@ const SEOManager = () => {
 };
 
 export default SEOManager;
+

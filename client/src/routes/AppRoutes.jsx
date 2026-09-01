@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+﻿import { Routes, Route } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import AdminLayout from "../layouts/AdminLayout";
 
@@ -9,6 +9,7 @@ import CustomOrders from "../pages/CustomOrders";
 import About from "../pages/About";
 import Contact from "../pages/Contact";
 import Login from "../pages/Login";
+import ReturnPolicy from "../pages/ReturnPolicy";
 import Register from "../pages/Register";
 import Cart from "../pages/Cart";
 import Checkout from "../pages/Checkout";
@@ -57,6 +58,16 @@ const AppRoutes = () => {
         />
 
         <Route
+
+          path="return-policy"
+
+          element={<ReturnPolicy />}
+
+        />
+
+
+        <Route
+
           path="login"
           element={<Login />}
         />

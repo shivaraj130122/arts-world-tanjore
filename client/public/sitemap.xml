@@ -11,14 +11,14 @@
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://bhavani-art-world.onrender.com/custom-orders</loc>
-    <changefreq>monthly</changefreq>
+    <loc>https://bhavani-art-world.onrender.com/collections</loc>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://bhavani-art-world.onrender.com/contact</loc>
+    <loc>https://bhavani-art-world.onrender.com/custom-orders</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://bhavani-art-world.onrender.com/about</loc>
@@ -26,148 +26,272 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://bhavani-art-world.onrender.com/collections</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <loc>https://bhavani-art-world.onrender.com/contact</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://bhavani-art-world.onrender.com/shop?category=fabric-paintings</loc>
+    <lastmod>2026-08-28T09:10:05.121Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://bhavani-art-world.onrender.com/shop?category=flower%20flower%20bouquets</loc>
+    <lastmod>2026-08-28T09:01:23.530Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://bhavani-art-world.onrender.com/shop?category=gifts-crafts</loc>
+    <lastmod>2026-08-28T09:03:53.648Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://bhavani-art-world.onrender.com/shop?category=saree-border-painting</loc>
+    <lastmod>2026-08-12T19:03:33.537Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://bhavani-art-world.onrender.com/shop?category=blouse%20paintings</loc>
+    <lastmod>2026-08-26T06:53:41.844Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://bhavani-art-world.onrender.com/product/p16</loc>
+    <loc>https://bhavani-art-world.onrender.com/product/krishna%20painting</loc>
+    <lastmod>2026-08-31T16:45:03.200Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1788193648/bhavani-art-world/products/lpjm24jplvaix1qozqwd.jpg</image:loc>
+      <image:title>krishna painting</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://bhavani-art-world.onrender.com/product/p20</loc>
+    <lastmod>2026-08-28T18:24:34.879Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1787934472/bhavani-art-world/products/zalgxx3okajoapjj3fss.jpg</image:loc>
+      <image:title>denim gift</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://bhavani-art-world.onrender.com/product/p18</loc>
+    <lastmod>2026-08-28T15:47:16.616Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1787931906/bhavani-art-world/products/dsxox8nlpn860y9smjnr.jpg</image:loc>
+      <image:title>Floral Saree Border painting</image:title>
+    </image:image>
   </url>
   <url>
-    <loc>https://bhavani-art-world.onrender.com/product/p6</loc>
+    <loc>https://bhavani-art-world.onrender.com/product/p16</loc>
+    <lastmod>2026-08-28T17:42:47.623Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://bhavani-art-world.onrender.com/product/p3</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1787488823/bhavani-art-world/products/pruekmoss6lwhkthxabb.jpg</image:loc>
+      <image:title>Peacock Motif Blouse Art</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1787488825/bhavani-art-world/products/xqqyvzxv1yjxhrhd48sl.jpg</image:loc>
+      <image:title>Peacock Motif Blouse Art</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1787488692/bhavani-art-world/products/zwtjneuxm6sleylhpyvh.jpg</image:loc>
+      <image:title>Peacock Motif Blouse Art</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://bhavani-art-world.onrender.com/product/p5</loc>
+    <lastmod>2026-08-28T18:24:51.206Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1787489086/bhavani-art-world/products/ythkk54c3ueqkbb7jq2v.jpg</image:loc>
+      <image:title>Floral blouse Artwork</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://bhavani-art-world.onrender.com/product/p7</loc>
+    <lastmod>2026-08-23T13:31:40.635Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1787491717/bhavani-art-world/products/sff4lqsr3o2ojkj0euli.jpg</image:loc>
+      <image:title>Royal parrots painting</image:title>
+    </image:image>
   </url>
   <url>
-    <loc>https://bhavani-art-world.onrender.com/product/Flower%20bouquets</loc>
+    <loc>https://bhavani-art-world.onrender.com/product/p3</loc>
+    <lastmod>2026-08-23T13:05:21.220Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1787489723/bhavani-art-world/products/tqsqiqoj3bxumarbovpq.jpg</image:loc>
+      <image:title>Peacock Tanjore Painting</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1787489724/bhavani-art-world/products/irs3ixzt2mrg34fjvufh.jpg</image:loc>
+      <image:title>Peacock Tanjore Painting</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1787489707/bhavani-art-world/products/as3vohviwprpzbtc2cvl.jpg</image:loc>
+      <image:title>Peacock Tanjore Painting</image:title>
+    </image:image>
   </url>
   <url>
-    <loc>https://bhavani-art-world.onrender.com/product/p2</loc>
+    <loc>https://bhavani-art-world.onrender.com/product/p6</loc>
+    <lastmod>2026-08-28T16:22:08.387Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://bhavani-art-world.onrender.com/product/p22</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://bhavani-art-world.onrender.com/product/p19</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://bhavani-art-world.onrender.com/product/p4</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://bhavani-art-world.onrender.com/product/p12</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1787933961/bhavani-art-world/products/bptk0bwai0fywsnvgrpu.jpg</image:loc>
+      <image:title>Customized Couple Portrait</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://bhavani-art-world.onrender.com/product/p10</loc>
+    <lastmod>2026-08-28T17:00:44.570Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1787936222/bhavani-art-world/products/ifpeuybdh0dvk4hz2bw9.jpg</image:loc>
+      <image:title>ShivaShakti Duet Painting</image:title>
+    </image:image>
   </url>
   <url>
-    <loc>https://bhavani-art-world.onrender.com/product/p17</loc>
+    <loc>https://bhavani-art-world.onrender.com/product/krishna003</loc>
+    <lastmod>2026-08-31T17:18:05.011Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1788196509/bhavani-art-world/products/ftsd0lk3p9zvzn9at8v3.jpg</image:loc>
+      <image:title>krishna outline</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://bhavani-art-world.onrender.com/product/kp002</loc>
+    <lastmod>2026-08-31T17:09:47.582Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1788195936/bhavani-art-world/products/zmanw5ylf5rkaxwtpkf0.jpg</image:loc>
+      <image:title>Little krishna painting</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://bhavani-art-world.onrender.com/product/engage09</loc>
+    <lastmod>2026-08-31T17:05:21.518Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1788195536/bhavani-art-world/products/haka5cxueuykstsjjikg.jpg</image:loc>
+      <image:title>engagement design</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://bhavani-art-world.onrender.com/product/Flower%20bouquets</loc>
+    <lastmod>2026-08-28T18:06:53.894Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1787843849/bhavani-art-world/products/es3kmkorgkb3xvmb7xca.jpg</image:loc>
+      <image:title>sunflower bouquet</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://bhavani-art-world.onrender.com/product/p22</loc>
+    <lastmod>2026-08-31T16:58:37.857Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1786466629/bhavani-art-world/products/zqvcak3cnilakac4nrnv.png</image:loc>
+      <image:title>Handmade Gift Set – Petite</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1786466633/bhavani-art-world/products/xg0zz9uvgqpquw2hxfcb.png</image:loc>
+      <image:title>Handmade Gift Set – Petite</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1786466635/bhavani-art-world/products/kwyya5cdjandpre9wam7.png</image:loc>
+      <image:title>Handmade Gift Set – Petite</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1786466637/bhavani-art-world/products/cvq1ejbclzpobjmn81m8.png</image:loc>
+      <image:title>Handmade Gift Set – Petite</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1786466553/bhavani-art-world/products/mkk5zovv0dspkyay4180.png</image:loc>
+      <image:title>Handmade Gift Set – Petite</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://bhavani-art-world.onrender.com/product/p19</loc>
+    <lastmod>2026-08-28T15:59:38.893Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1787932091/bhavani-art-world/products/smxv1ol0e6qw2ou1umhj.jpg</image:loc>
+      <image:title>customized pencil sketch</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://bhavani-art-world.onrender.com/product/p2</loc>
+    <lastmod>2026-08-27T15:24:45.687Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1787844176/bhavani-art-world/products/btzckkaa1u13cdutxnrv.jpg</image:loc>
+      <image:title>lily flower bouquet</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://bhavani-art-world.onrender.com/product/p9</loc>
+    <lastmod>2026-08-27T15:31:27.300Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://bhavani-art-world.onrender.com/product/p21</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://bhavani-art-world.onrender.com/product/p15</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://bhavani-art-world.onrender.com/product/p1</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://bhavani-art-world.onrender.com/product/p14</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1787844640/bhavani-art-world/products/dy8jubtas39qk6brfq8e.jpg</image:loc>
+      <image:title>lily and tulip bouquet</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://bhavani-art-world.onrender.com/product/p11</loc>
+    <lastmod>2026-08-28T16:27:19.163Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1787934217/bhavani-art-world/products/bemyma1muqt6t8btu42p.jpg</image:loc>
+      <image:title>god paintings</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1787934248/bhavani-art-world/products/yr3tgyflco52mf0st7yj.jpg</image:loc>
+      <image:title>god paintings</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1787934236/bhavani-art-world/products/hlxk5lupixuqppvhqkhc.jpg</image:loc>
+      <image:title>god paintings</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://bhavani-art-world.onrender.com/product/p8</loc>
+    <lastmod>2026-08-23T13:40:44.627Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://bhavani-art-world.onrender.com/product/p13</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1787492332/bhavani-art-world/products/kwqxaslipu57pjwsjjoj.jpg</image:loc>
+      <image:title>Hand Painted royal peacock on sleeves</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://res.cloudinary.com/dpqztyp53/image/upload/v1787492168/bhavani-art-world/products/z9yvchlou8fbfkx8v9yi.jpg</image:loc>
+      <image:title>Hand Painted royal peacock on sleeves</image:title>
+    </image:image>
   </url>
 </urlset>

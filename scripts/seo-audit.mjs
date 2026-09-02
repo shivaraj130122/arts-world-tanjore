@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const ROOT = path.resolve("client");
-const SITE_URL = "https://bhavani-art-world.onrender.com";
+const SITE_URL = "https://bhavaniartworld.shop";
 const REQUIRED_FILES = [
   "index.html",
   "public/robots.txt",

@@ -1,6 +1,6 @@
 const Product = require("../models/Product");
 
-const SITE_URL = "https://bhavani-art-world.onrender.com";
+const SITE_URL = "https://bhavaniartworld.shop";
 
 const escapeXml = (value = "") =>
   String(value)

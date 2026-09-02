@@ -22,7 +22,7 @@ import { PageSearchContent } from "../components/seo/SearchLandingContent";
 import { trackEvent } from "../services/analytics";
 import { useWishlist } from "../hooks/useWishlist";
 
-const SITE_URL = "https://bhavani-art-world.onrender.com";
+const SITE_URL = "https://bhavaniartworld.shop";
 
 const ProductNotFound = () => {
   useEffect(() => {

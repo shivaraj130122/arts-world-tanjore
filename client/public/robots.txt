@@ -13,4 +13,4 @@ Disallow: /cart
 Disallow: /checkout
 Disallow: /wishlist
 
-Sitemap: https://bhavani-art-world.onrender.com/sitemap.xml
+Sitemap: https://bhavaniartworld.shop/sitemap.xml

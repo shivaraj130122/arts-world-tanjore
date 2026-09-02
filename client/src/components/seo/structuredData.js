@@ -1,4 +1,4 @@
-const SITE_URL = "https://bhavani-art-world.onrender.com";
+const SITE_URL = "https://bhavaniartworld.shop";
 const SITE_NAME = "Bhavani's Art World";
 const DEFAULT_IMAGE = `${SITE_URL}/og-image.png`;
 

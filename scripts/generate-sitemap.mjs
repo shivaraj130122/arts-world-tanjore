@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-const SITE_URL = "https://bhavani-art-world.onrender.com";
+const SITE_URL = "https://bhavaniartworld.shop";
 const API_BASE_URL = (process.env.VITE_API_URL || process.env.API_BASE_URL || "").replace(/\/+$/, "");
 
 if (!API_BASE_URL) {

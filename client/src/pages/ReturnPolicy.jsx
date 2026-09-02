@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import Container from "../components/ui/Container";
 import { setSEO } from "../components/seo/SEOManager";
 
-const SITE_URL = "https://bhavani-art-world.onrender.com";
+const SITE_URL = "https://bhavaniartworld.shop";
 
 const ReturnPolicy = () => {
   useEffect(() => {

@@ -27,6 +27,7 @@ app.use(helmet());
 const allowedOrigins = [
   "http://localhost:5173",
   "https://bhavani-art-world.onrender.com",
+  "https://bhavaniartworld.shop",
 ];
 
 if (process.env.CLIENT_URL) {

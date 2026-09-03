@@ -1,13 +1,17 @@
-﻿export const SEO_KEYWORD_MAP = {
+export const SEO_KEYWORD_MAP = {
   homepage: {
     primary: [
       "Tanjore paintings",
-      "handmade Tanjore paintings",
+      "handmade gifts",
+      "blouse fabric painting",
       "Bhavani's Art World",
     ],
     secondary: [
       "Tanjore paintings online",
-      "traditional Indian art",
+      "handmade gifts online",
+      "unique handmade gifts",
+      "blouse painting designs",
+      "hand painted blouse designs",
       "custom artwork",
     ],
   },

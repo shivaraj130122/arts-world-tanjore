@@ -18,15 +18,14 @@ const RelatedLinks = ({ links }) => (
 export const HomepageSearchContent = () => (
   <section className="border-t border-primary/10 bg-background/60 py-12" aria-labelledby="search-intent-home">
     <div className="container-app">
-      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-secondary-dark">Handcrafted Indian Art</p>
+      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-secondary-dark">Handcrafted Indian Art & Gifts</p>
       <h2 id="search-intent-home" className="mt-2 font-heading text-2xl font-semibold text-primary sm:text-3xl">
-        Tanjore Paintings & Handmade Art from Bhavani&apos;s Art World
+        Handmade Gifts, Blouse Fabric Painting & Tanjore Art
       </h2>
       <p className="mt-4 max-w-3xl text-sm leading-7 text-text/65 sm:text-base">
-        Bhavani&apos;s Art World brings together handcrafted Tanjore paintings, fabric paintings, saree border paintings, blouse paintings, handmade gifts and custom artwork. Explore the collections to find traditional Indian art and personalized creations made with care.
+        Bhavani&apos;s Art World brings together handmade gifts, blouse fabric painting, hand painted blouse designs, fabric paintings, Tanjore paintings and custom artwork. Discover unique handmade gifts for special occasions and explore artistic blouse painting designs created with care and attention to detail.
       </p>
       <RelatedLinks links={[
-        { to: "/shop?category=tanjore-paintings", label: "Tanjore Paintings" },
         { to: "/shop?category=fabric-paintings", label: "Fabric Paintings" },
         { to: "/shop?category=saree-border-painting", label: "Saree Border Paintings" },
         { to: "/shop?category=blouse-painting", label: "Blouse Paintings" },

@@ -9,7 +9,7 @@ import PriceTag from "../ui/PriceTag";
 import Rating from "../ui/Rating";
 import ProductImage from "../ui/ProductImage";
 
-// `onQuickView` is optional — pages that don't pass it (Cart, Wishlist)
+// `onQuickView` is optional Ã¢â‚¬â€ pages that don't pass it (Cart, Wishlist)
 // simply don't render the quick-view button, so existing usage is unaffected.
 const ProductCard = ({ product, onQuickView }) => {
   const { addToCart } = useCart();
@@ -22,6 +22,7 @@ const ProductCard = ({ product, onQuickView }) => {
     oldPrice,
     originalPrice,
     image,
+    images,
     category,
     rating,
     reviewCount,
@@ -33,6 +34,7 @@ const ProductCard = ({ product, onQuickView }) => {
   // Support both the original `oldPrice` field and the richer `originalPrice`
   // field used by constants/products.js, without breaking either caller.
   const strikePrice = originalPrice || oldPrice;
+  const productImage = image || (Array.isArray(images) ? images[0] : "");
 
   return (
     <motion.div
@@ -60,7 +62,7 @@ const ProductCard = ({ product, onQuickView }) => {
       <Link to={`/product/${_id}`} className="block">
         <div className="relative aspect-square w-full overflow-hidden bg-background">
           <ProductImage
-            src={image}
+            src={productImage}
             alt={name}
             className="transition-transform duration-300 group-hover:scale-105"
           />

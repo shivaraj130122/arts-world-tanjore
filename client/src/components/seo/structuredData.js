@@ -86,7 +86,7 @@ const getAvailability = (product) =>
 export const createProductSchema = ({ product, url }) => {
   const name = clean(product?.name, "Handcrafted Artwork");
   const description = clean(product?.description, `${name} from ${SITE_NAME}.`);
-  const images = [...(Array.isArray(product?.images) ? product.images : []), product?.image]
+  const images = [product?.image, ...(Array.isArray(product?.images) ? product.images : [])]
     .filter(Boolean).map((image) => absoluteUrl(image))
     .filter((image, index, list) => list.indexOf(image) === index);
 

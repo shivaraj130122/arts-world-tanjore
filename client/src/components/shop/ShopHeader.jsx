@@ -1,10 +1,10 @@
-import { Link } from "react-router-dom";
+﻿import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FiChevronRight } from "react-icons/fi";
 import Container from "../ui/Container";
 import { SITE_TAGLINE } from "../../constants";
 
-// Compact premium header — keeps products visible quickly rather than
+// Compact premium header â€” keeps products visible quickly rather than
 // pushing them below a tall hero. Breadcrumb reflects the active category
 // via React Router Links (no page reload).
 const ShopHeader = ({ activeCategoryLabel }) => {
@@ -34,7 +34,11 @@ const ShopHeader = ({ activeCategoryLabel }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
         >
-          <h1 className="font-heading text-3xl font-bold md:text-4xl">Shop Our Art</h1>
+          <h1 className="font-heading text-3xl font-bold md:text-4xl">
+  {activeCategoryLabel === "Tanjore Blouse Painting"
+    ? "Blouse Designs"
+    : activeCategoryLabel || "Shop Our Art"}
+</h1>
           <p className="mt-2 text-sm text-secondary md:text-base">{SITE_TAGLINE}</p>
           <p className="mt-2 max-w-xl text-sm text-background/70">
             Discover handcrafted paintings, creative designs and timeless
@@ -47,3 +51,5 @@ const ShopHeader = ({ activeCategoryLabel }) => {
 };
 
 export default ShopHeader;
+
+

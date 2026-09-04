@@ -1,4 +1,4 @@
-export const SEO_KEYWORD_MAP = {
+﻿export const SEO_KEYWORD_MAP = {
   homepage: {
     primary: [
       "Tanjore paintings",
@@ -53,13 +53,14 @@ export const SEO_KEYWORD_MAP = {
     "blouse-painting": {
   primary: "Blouse Painting",
   secondary: [
-    "blouse painting designs",
-    "hand painted blouse designs",
-    "custom blouse painting",
     "blouse fabric painting",
+    "hand painted blouse designs",
+    "blouse painting designs",
+    "Tanjore blouse painting",
+    "traditional blouse painting",
   ],
   intro:
-    "Explore beautiful blouse painting designs and hand painted blouse artwork created on fabric. Discover custom blouse paintings and traditional Indian-inspired designs for sarees, weddings, and special occasions.",
+    "Explore beautiful blouse painting designs and blouse fabric painting created by hand on blouse pieces and fabric. Discover hand painted blouse designs featuring traditional Indian-inspired artwork, including peacock, parrot, Kolam, devotional, and other artistic designs for sarees, weddings, festive occasions, and special events.",
 },
 
     "blouse-paintings": {
@@ -122,3 +123,4 @@ export const SEO_KEYWORD_MAP = {
 
 export const getCategorySeoContent = (slug) =>
   SEO_KEYWORD_MAP.categories[slug] || null;
+
